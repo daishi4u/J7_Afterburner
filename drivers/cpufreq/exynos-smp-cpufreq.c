@@ -50,7 +50,7 @@
 
 #define DIV_MASK_ALL		0xffffffff
 #define LIMIT_COLD_VOLTAGE	1350000
-#define MIN_COLD_VOLTAGE	950000
+#define MIN_COLD_VOLTAGE 	950000
 #define COLD_VOLT_OFFSET	37500
 
 #define APLL_FREQ(f, a0, a1, a2, a3, a4, a5, a6, b0, b1, m, p, s) \
@@ -95,6 +95,7 @@ static struct {
 	 * clock divider for SCLK_CPU_PLL, SCLK_HPM_CPU
 	 * PLL M, P, S
 	 */
+	//APLL_FREQ(1700000, 0, 0, 7, 7, 2, 7, 3, 7, 7, 262, 4, 0),
 	APLL_FREQ(1600000, 0, 0, 7, 7, 2, 7, 3, 7, 7, 246, 4, 0),
 	APLL_FREQ(1500000, 0, 0, 7, 7, 2, 7, 3, 7, 7, 230, 4, 0),
 	APLL_FREQ(1400000, 0, 0, 7, 7, 2, 7, 3, 7, 7, 216, 4, 0),
@@ -112,6 +113,7 @@ static struct {
 };
 
 static unsigned int exynos_bus_table[] = {
+	//825000, /* 1.7GHz */
 	825000, /* 1.6GHz */
 	825000, /* 1.5GHz */
 	825000, /* 1.4GHz */
@@ -259,13 +261,13 @@ static int exynos_cpufreq_get_index(int cluster, unsigned long freq)
 	for (index = 0;
 			freq_table[cluster][index].frequency != CPUFREQ_TABLE_END; index++) {
 		if (freq_table[cluster][index].frequency == freq)
-			break;
+			return index;
 	}
 
-	if (freq_table[cluster][index].frequency == CPUFREQ_TABLE_END)
+	//if (freq_table[cluster][index].frequency == CPUFREQ_TABLE_END)
 		return -EINVAL;
 
-	return index;
+	//return index;
 }
 
 static void exynos_apll_set_clkdiv(int cluster, int div_index)
@@ -780,7 +782,8 @@ static int __cpuinit exynos_cpufreq_cpu_down_notifier(struct notifier_block *not
 			if (cluster == CL_ONE) {
 				cpumask_and(&mask, cpu_coregroup_mask(cpu), cpu_online_mask);
 				if (cpumask_weight(&mask) == 1)
-					pm_qos_update_request(&cluster_qos_max[CL_ONE], apll_freq[ARRAY_SIZE(apll_freq) - 2].freq / 1000);
+                pm_qos_update_request(&cluster_qos_max[CL_ONE], apll_freq[ARRAY_SIZE(apll_freq) - 1].freq / 1000);
+					//pm_qos_update_request(&cluster_qos_max[CL_ONE], apll_freq[ARRAY_SIZE(apll_freq) - 2].freq / 1000); //should be -1
 			}
 			break;
 		}
@@ -927,8 +930,8 @@ static int exynos_cpufreq_init(struct cpufreq_policy *policy)
 		//freq_table[cur_cluster][0].frequency = CPUFREQ_ENTRY_INVALID;
 	}
 
-	if (soc_is_exynos7580_v1())
-		policy->cpuinfo.max_freq = 1600000;
+	//if (soc_is_exynos7580_v1())
+	//	policy->cpuinfo.max_freq = 1600000;
 
 	cpumask_copy(policy->cpus, topology_core_cpumask(policy->cpu));
 
@@ -1006,10 +1009,11 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj, struct attribute *a
 			      const char *buf, size_t n)
 {
 	int i;
-	int ret, freq;
+	//int ret, freq;
+  int freq;
 
-	ret = sscanf(buf, "%d", &freq);
-	if (ret != 1)
+	//ret = sscanf(buf, "%d", &freq);
+	if (sscanf(buf, "%d", &freq) != 1)
 		return -EINVAL;
 
 	if (freq < 0)
@@ -1044,18 +1048,19 @@ static ssize_t store_cpufreq_max_limit(struct kobject *kobj, struct attribute *a
 			      const char *buf, size_t n)
 {
 	int i;
-	int ret, freq;
-	int index = 0;
+	//int ret, freq;
+   int freq;
+	//int index = 0;
 
-	ret = sscanf(buf, "%d", &freq);
-	if (ret != 1)
+	//ret = sscanf(buf, "%d", &freq);
+	if (sscanf(buf, "%d", &freq) != 1)
 		return -EINVAL;
 
 	//if (soc_is_exynos7580_v1())
 	//	index = 1;
 
 	if (freq < 0)
-		freq = apll_freq[index].freq / 1000;
+		freq = apll_freq[0].freq / 1000;
 
 	for (i = 0; i < CL_END; i++)
 		pm_qos_update_request(&cluster_qos_max[i], freq);
