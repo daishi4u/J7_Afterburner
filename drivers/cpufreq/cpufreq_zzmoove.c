@@ -81,13 +81,13 @@
 #define MAX_CORES					(8)
 
 // ZZ: enable/disable hotplug support
-#define ENABLE_HOTPLUGGING
+//#define ENABLE_HOTPLUGGING
 
 // ZZ: enable support for native hotplugging on snapdragon platform
 // #define SNAP_NATIVE_HOTPLUGGING
 
 // ZZ: enable for sources with backported cpufreq implementation of 3.10 kernel
-#define CPU_IDLE_TIME_IN_CPUFREQ
+//#define CPU_IDLE_TIME_IN_CPUFREQ
 
 // ZZ: enable/disable music limits
 #define ENABLE_MUSIC_LIMITS
@@ -121,7 +121,7 @@ static char custom_profile[20] = "custom";			// ZZ: name to show in sysfs if any
  */
 #define TRANSITION_LATENCY_LIMIT	    (10 * 1000 * 1000)	// ZZ: default transition latency limit
 #define LATENCY_MULTIPLIER				(1000)	// ZZ: default latency multiplier
-#define MIN_LATENCY_MULTIPLIER				(100)	// ZZ: default min latency multiplier
+#define MIN_LATENCY_MULTIPLIER				(20)	// ZZ: default min latency multiplier
 #define MIN_SAMPLING_RATE_RATIO				(2)	// ZZ: default min sampling rate ratio
 
 // ZZ: general tuneable defaults
