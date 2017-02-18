@@ -4,7 +4,8 @@
 
 ifeq ($(SEC_BUILD_OPTION_PRODUCT_SHIP), true)
 ifeq ($(SEC_BUILD_OPTION_SELINUX_ENFORCE),true)
-EXTRA_CFLAGS += -DCONFIG_ALWAYS_ENFORCE=
+# setting to false doesn't work, but clearing does... except non permissive kernel breaks
+#EXTRA_CFLAGS += -DCONFIG_ALWAYS_ENFORCE=false 
 endif
 endif
 
