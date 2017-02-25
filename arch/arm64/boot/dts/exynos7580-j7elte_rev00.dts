@@ -1500,6 +1500,7 @@
 		mif,gpio_ds_det = <&gpd0 4 0x0>;
 		mif,ap_clk_table = <
 			/* khz */
+			1700000
 			1600000
 			1500000
 			1400000

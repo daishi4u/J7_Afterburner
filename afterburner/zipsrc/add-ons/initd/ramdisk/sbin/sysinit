@@ -1,0 +1,6 @@
+#!/sbin/busybox sh
+PATH=$PATH:/sbin
+busybox mount -o remount,rw -t ext4 /dev/block/platform/13540000.dwmmc0/by-name/SYSTEM /system
+busybox mkdir /system/etc/init.d
+busybox chmod 777 /system/etc/init.d/*
+busybox run-parts /system/etc/init.d/ > /data/log/initd.log

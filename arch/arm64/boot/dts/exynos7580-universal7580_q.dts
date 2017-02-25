@@ -13,11 +13,12 @@
 #include "exynos7580-q.dtsi"
 
 / {
-	model = "Samsung Universal7580 board based on EXYNOS7580";
-	compatible = "samsung,exynos7580-universal7580", "samsung,exynos7580";
+	model = "Samsung Universal7580 revision 00 board based on EXYNOS7580";
+	
+	compatible = "samsung,exynos7580-universal7580,r00", "samsung,exynos7580";
 
 	chosen {
-		bootargs = "console=ttySAC1,115200n8 ess_setup=0x46000000 pmic_info=0x02 androidboot.hardware=samsungexynos7580";
+		bootargs = "console=ttySAC1,115200n8 ess_setup=0x46000000 pmic_info=0x02";
 		linux,initrd-start = <0x42000000>;
 		linux,initrd-end = <0x421FFFFF>;
 	};

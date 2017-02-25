@@ -1,0 +1,92 @@
+set_progress(0.0);
+
+ui_print("Mounting /system and /data");
+if !is_mounted("/system")
+then
+    mount("ext4", "EMMC", "/dev/block/platform/13540000.dwmmc0/by-name/SYSTEM", "/system", "");
+endif;
+if !is_mounted("/data")
+then
+    mount("ext4", "EMMC", "/dev/block/platform/13540000.dwmmc0/by-name/USERDATA", "/data", "");
+endif;
+
+ui_print("Extracting boot image tools");
+package_extract_dir("bootimgtools", "/tmp/bootimgtools");
+run_program("/sbin/busybox", "chmod", "-R", "755", "/tmp/bootimgtools");
+
+set_progress(0.1);
+
+ui_print("Extracting boot image from device");
+run_program("/tmp/bootimgtools/install/extractbootimg");
+
+ui_print("Cleaning up previous installations");
+run_program("/tmp/bootimgtools/uninstall/rmfeatures");
+
+set_progress(0.2);
+
+ui_print("Patching boot image");
+package_extract_dir("kernel", "/tmp/bootimgtools/tools/patimg");
+run_program("/tmp/bootimgtools/install/patchbootimg");
+
+set_progress(0.3);
+
+if file_getprop("/tmp/aroma-data/kernel.prop","item.1.3") == "1"
+then
+    ui_print("Installing insecure adb");
+    run_program("/tmp/bootimgtools/install/install-adb-insecure");
+else
+    package_extract_dir("stock/ramdisk", "/tmp/bootimgtools/tools/patimg/ramdisk");
+endif; 
+
+set_progress(0.4);
+
+if file_getprop("/tmp/aroma-data/kernel.prop","item.1.4") == "1"
+then
+    ui_print("Installing init.d support");
+    package_extract_dir("add-ons/initd/ramdisk","/tmp/bootimgtools/tools/patimg/ramdisk");
+    run_program("/tmp/bootimgtools/install/install-initd");
+endif;
+
+set_progress(0.5);
+
+if ((file_getprop("/tmp/aroma-data/kernel.prop","item.1.5") == "1") || (file_getprop("/tmp/aroma-data/kernel.prop","item.1.4") == "1"))
+then
+    ui_print("Installing busybox");
+    run_program("/tmp/bootimgtools/install/install-busybox");
+endif;
+
+set_progress(0.6);
+
+if file_getprop("/tmp/aroma-data/kernel.prop","item.1.2") == "1"
+then
+   ui_print("Installing Permissive kernel");
+   package_extract_dir("add-ons/permissive/ramdisk", "/tmp/bootimgtools/tools/patimg/ramdisk");
+   run_program("/tmp/bootimgtools/install/install-permissive");
+endif;
+
+set_progress(0.7);
+
+ui_print("Flashing patched Afterburner boot image...");
+run_program("/tmp/bootimgtools/install/flashbootimg");
+
+set_progress(0.8);
+
+if file_getprop("/tmp/aroma-data/kernel.prop","item.1.1") == "1"
+then
+    ui_print("Installing root");
+   package_extract_dir("add-ons/supersu", "/tmp/supersu");
+   run_program("/tmp/bootimgtools/install/install-supersu");
+endif;
+
+set_progress(0.9);
+
+ui_print("Cleaning up... ");
+run_program("/sbin/busybox","rm","-rf","/tmp/bootimgtools");
+
+ui_print("Unmounting /system and /data");
+unmount("/data");
+unmount("/system");
+
+set_progress(1.0);
+
+ui_print("DONE!!! Reboot and enjoy!!");

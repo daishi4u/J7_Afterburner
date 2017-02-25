@@ -1,0 +1,6 @@
+on boot
+
+service sysinit /sbin/busybox sh /sbin/sysinit
+    class main
+    user root
+    oneshot

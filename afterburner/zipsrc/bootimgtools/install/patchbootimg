@@ -1,0 +1,11 @@
+#!/tmp/bootimgtools/tools/bash
+tooldir=/tmp/bootimgtools/tools
+busybox=$tooldir/busybox
+cd $tooldir/patimg/ramdisk
+$busybox rm *.ranchu* *.goldfish* init.container.rc sbin/knox_changer
+
+# fix a bug
+cd $tooldir/patimg/ramdisk/sbin
+rm ueventd watchdogd
+ln -s ../init ueventd
+ln -s ../init watchdogd

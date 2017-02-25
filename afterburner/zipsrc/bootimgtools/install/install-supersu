@@ -1,0 +1,6 @@
+#!/tmp/bootimgtools/tools/bash
+tooldir=/tmp/bootimgtools/tools
+box=$tooldir/busybox
+$box unzip /tmp/supersu/SuperSU.zip META-INF/com/google/android/* -d /tmp/supersu
+$box sh /tmp/supersu/META-INF/com/google/android/update-binary dummy 1 /tmp/supersu/SuperSU.zip
+$box rm -rf /tmp/supersu

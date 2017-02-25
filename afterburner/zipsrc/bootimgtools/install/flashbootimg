@@ -1,0 +1,6 @@
+#!/tmp/bootimgtools/tools/bash
+tooldir=/tmp/bootimgtools/tools
+cd $tooldir
+box=$tooldir/busybox
+$tooldir/bash wrapper patimg boot.img
+$box dd if=$tooldir/patimg/boot.img of=/dev/block/platform/13540000.dwmmc0/by-name/BOOT

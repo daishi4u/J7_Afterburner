@@ -72,6 +72,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0 &CPU_SLEEP_1 &CPU_SLEEP_2 &CPU_SLEEP_3>;
 			operating-points = <
 				/* khz    uv */
+				1700000  1343750
 				1600000  1300000
 				1500000  1287500
 				1400000  1237500
@@ -121,6 +122,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0 &CPU_SLEEP_1 &CPU_SLEEP_2 &CPU_SLEEP_3>;
 			operating-points = <
 				/* khz    uv */
+				1700000  1343750
 				1600000  1300000
 				1500000  1287500
 				1400000  1237500
