@@ -14,11 +14,16 @@ mkdir tmp
 $MYTOOLS/unpackbootimg -i boot-new.img -o tmp
 cp tmp/boot-new.img-dt $ABDIR/zipsrc/kernel/dt.img
 rm -rf $MYOUT/tmp
+rm $MYOUT/Image.gz-dtb
+rm $MYOUT/boot.img-ramdisk.gz
+rm $MYOUT/boot-new.img
 cd $ABDIR/zipsrc
 
 # make the flashable zip
 zip -r afterburner.zip stock/ kernel/ bootimgtools/ add-ons/ META-INF/
-cp afterburner.zip $ABDIR/out/
+mv afterburner.zip $ABDIR/out/
+rm $ABDIR/zipsrc/kernel/dt.img
+rm $ABDIR/zipsrc/kernel/zImage
 
 # move to my personal out dir
-mv afterburner.zip $KERNELDIR/../../dev/buildout/kernel/
+cp $ABDIR/out/afterburner.zip $KERNELDIR/../../dev/buildout/kernel/
