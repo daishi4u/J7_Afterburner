@@ -66,6 +66,15 @@ endif;
 
 set_progress(0.7);
 
+if file_getprop("/tmp/aroma-data/kernel.prop","item.1.6") == "1"
+then
+    ui_print("Installing J700H device tree");
+    package_extract_dir("device/j7e3g", "/tmp/bootimgtools/tools/patimg");
+else
+	ui_print("Installing J700F/M device tree");
+	package_extract_dir("device/j7elte", "/tmp/bootimgtools/tools/patimg");
+endif;
+
 ui_print("Flashing patched Afterburner boot image...");
 run_program("/tmp/bootimgtools/install/flashbootimg");
 
