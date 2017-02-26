@@ -2,6 +2,5 @@
 tooldir=/tmp/bootimgtools/tools
 cd $tooldir
 box=$tooldir/busybox
-echo $box
 $box dd if=/dev/block/platform/13540000.dwmmc0/by-name/BOOT of=$tooldir/boot.img
 $tooldir/bash wrapper boot.img patimg

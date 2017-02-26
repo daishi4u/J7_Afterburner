@@ -4,7 +4,7 @@ box=$tooldir/busybox
 cd $tooldir/patimg/ramdisk
 
 # remove insecure adb stuff
-$busybox sed -i -f $tooldir/../uninstall/replace_defaultprop_remove.sed default.prop
+$box sed -i -f $tooldir/../uninstall/replace_defaultprop_remove.sed default.prop
 
 # remove busybox
 $box rm sbin/busybox
@@ -31,12 +31,12 @@ $box sed -i '\|import /init.initd.rc|d' init.rc
 $box sed -i -f $tooldir/../install/replace_file_contexts.sed file_contexts
 $box sed -i -f $tooldir/../install/replace_initenvironrc.sed init.environ.rc
 $box sed -i -f $tooldir/../install/replace_initrc.sed init.rc
-$busybox rm -rf .subackup/
-$busybox rm -rf su/
-$busybox rm sbin/launch_daemonsu.sh
-$busybox rm init.supersu.rc
-$busybox rm /data/su.img
-$busybox rm /data/stock_boot_*.gz
-$busybox rm -rf /data/app/eu.chainfire.supersu-1
-$busybox rm /data/dalvik-cache/profiles/eu.chainfire.supersu
-$busybox rm -rf /data/data/eu.chainfire.supersu
+$box rm -rf .subackup/
+$box rm -rf su/
+$box rm sbin/launch_daemonsu.sh
+$box rm init.supersu.rc
+$box rm /data/su.img
+$box rm /data/stock_boot_*.gz
+$box rm -rf /data/app/eu.chainfire.supersu-1
+$box rm /data/dalvik-cache/profiles/eu.chainfire.supersu
+$box rm -rf /data/data/eu.chainfire.supersu
