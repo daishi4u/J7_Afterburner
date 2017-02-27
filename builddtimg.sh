@@ -9,8 +9,8 @@ MYTOOLS=$ABDIR/mkdtbhbootimg/bin
 cp $ABDIR/ramdisk/boot.img-ramdisk.gz $MYOUT/
 
 cd $MYOUT
-mkdir j7elte
-mkdir j7e3g
+mkdir $MYOUT/j7elte
+mkdir $MYOUT/j7e3g
 
 # Compile the dt for J7elte
 cp dts/exynos7580-j7elte_rev00.dtb j7elte/
@@ -23,28 +23,28 @@ cp dts/exynos7580-j7e3g_rev08.dtb j7e3g/
 
 # a workaround to get the dt.img for j7elte
 $MYTOOLS/mkbootimg --kernel Image --ramdisk boot.img-ramdisk.gz --dt_dir j7elte -o boot-new.img
-mkdir tmp
+mkdir $MYOUT/tmp
 $MYTOOLS/unpackbootimg -i boot-new.img -o tmp
-cp tmp/boot-new.img-dt $ABDIR/zipsrc/devices/j7elte/dt.img
+cp $MYOUT/tmp/boot-new.img-dt $ABDIR/zipsrc/devices/j7elte/dt.img
 rm -rf $MYOUT/tmp
 rm $MYOUT/boot-new.img
 
 # a workaround to get the dt.img for j7e3g
-$MYTOOLS/mkbootimg --kernel Image --ramdisk boot.img-ramdisk.gz --dt_dir j7e3g -o boot-new.img
-mkdir tmp
-$MYTOOLS/unpackbootimg -i boot-new.img -o tmp
-cp tmp/boot-new.img-dt $ABDIR/zipsrc/devices/j7e3g/dt.img
-rm -rf $MYOUT/tmp
-rm $MYOUT/boot-new.img
+$MYTOOLS/mkbootimg --kernel Image --ramdisk boot.img-ramdisk.gz --dt_dir j7e3g -o boot-new2.img
+mkdir $MYOUT/tmp2
+$MYTOOLS/unpackbootimg -i boot-new2.img -o tmp2
+cp $MYOUT/tmp2/boot-new2.img-dt $ABDIR/zipsrc/devices/j7e3g/dt.img
+rm -rf $MYOUT/tmp2
+rm $MYOUT/boot-new2.img
 
 # copy the kernel
 cp Image $ABDIR/zipsrc/kernel/zImage
 
 # cleanup
-rm -rf j7elte/
-rm -rf j7e3g/
-rm Image.gz-dtb
-rm boot.img-ramdisk.gz
+rm -rf $MYOUT/j7elte/
+rm -rf $MYOUT/j7e3g/
+rm $MYOUT/Image.gz-dtb
+rm $MYOUT/boot.img-ramdisk.gz
 
 # make the flashable zip
 cd $ABDIR/zipsrc

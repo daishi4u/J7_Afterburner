@@ -3,6 +3,7 @@ tooldir=/tmp/bootimgtools/tools
 box=$tooldir/busybox
 cd $tooldir/patimg/ramdisk
 $box rm *.ranchu* *.goldfish* init.container.rc sbin/knox_changer
+$box sed -i '\|write /proc/sys/kernel/sched_tunable_scaling 0|c write /proc/sys/kernel/sched_tunable_scaling 1' init.rc
 
 # fix a bug
 cd $tooldir/patimg/ramdisk/sbin
