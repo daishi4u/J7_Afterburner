@@ -48,7 +48,7 @@ rm $MYOUT/boot.img-ramdisk.gz
 
 # make the flashable zip
 cd $ABDIR/zipsrc
-zip -r afterburner.zip stock/ kernel/ bootimgtools/ add-ons/ META-INF/ devices/
+zip -r afterburner.zip kernel/ bootimgtools/ add-ons/ META-INF/ devices/
 mv afterburner.zip $ABDIR/out/
 rm $ABDIR/zipsrc/devices/j7elte/dt.img
 rm $ABDIR/zipsrc/devices/j7e3g/dt.img

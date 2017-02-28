@@ -13,17 +13,16 @@ endif;
 ui_print("Extracting boot image tools");
 package_extract_dir("bootimgtools", "/tmp/bootimgtools");
 run_program("/sbin/busybox", "chmod", "-R", "755", "/tmp/bootimgtools");
+package_extract_dir("kernel", "/tmp/bootimgtools/tools/kernel");
 
 set_progress(0.1);
 
-ui_print("Extracting boot image from device");
+ui_print("Patching boot image");
 run_program("/tmp/bootimgtools/install/extractbootimg");
 
 set_progress(0.2);
 
-ui_print("Patching boot image");
-package_extract_dir("kernel", "/tmp/bootimgtools/tools/patimg");
-run_program("/tmp/bootimgtools/install/patchbootimg");
+run_program("/tmp/bootimgtools/install/clean_previous");
 
 set_progress(0.3);
 
@@ -38,7 +37,7 @@ set_progress(0.4);
 if file_getprop("/tmp/aroma-data/kernel.prop","item.1.4") == "1"
 then
     ui_print("Installing init.d support");
-    package_extract_dir("add-ons/initd/ramdisk","/tmp/bootimgtools/tools/patimg/ramdisk");
+    package_extract_dir("add-ons/initd/ramdisk","/tmp/bootimgtools/tools/kernel/ramdisk");
     run_program("/tmp/bootimgtools/install/install-initd");
 endif;
 
@@ -55,7 +54,7 @@ set_progress(0.6);
 if file_getprop("/tmp/aroma-data/kernel.prop","item.1.2") == "1"
 then
    ui_print("Installing Permissive kernel");
-   package_extract_dir("add-ons/permissive/ramdisk", "/tmp/bootimgtools/tools/patimg/ramdisk");
+   package_extract_dir("add-ons/permissive/ramdisk", "/tmp/bootimgtools/tools/kernel/ramdisk");
    run_program("/tmp/bootimgtools/install/install-permissive");
 endif;
 
@@ -64,10 +63,10 @@ set_progress(0.7);
 if file_getprop("/tmp/aroma-data/kernel.prop","item.1.6") == "1"
 then
     ui_print("Installing J700H device tree");
-    package_extract_dir("device/j7e3g", "/tmp/bootimgtools/tools/patimg");
+    package_extract_dir("devices/j7e3g", "/tmp/bootimgtools/tools/kernel");
 else
 	ui_print("Installing J700F/M device tree");
-	package_extract_dir("device/j7elte", "/tmp/bootimgtools/tools/patimg");
+	package_extract_dir("devices/j7elte", "/tmp/bootimgtools/tools/kernel");
 endif;
 
 ui_print("Flashing patched Afterburner boot image...");

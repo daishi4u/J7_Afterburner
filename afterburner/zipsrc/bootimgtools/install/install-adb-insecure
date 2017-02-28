@@ -2,6 +2,6 @@
 tooldir=/tmp/bootimgtools/tools
 box=$tooldir/busybox
 # copy insecure adb from twrp to ramdisk
-$box cp /sbin/adbd $tooldir/patimg/ramdisk/sbin
-cd $tooldir/patimg/ramdisk
+$box cp /sbin/adbd $tooldir/kernel/ramdisk/sbin
+cd $tooldir/kernel/ramdisk
 $box sed -i -f $tooldir/../install/replace_defaultprop.sed default.prop

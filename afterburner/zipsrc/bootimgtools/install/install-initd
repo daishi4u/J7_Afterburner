@@ -1,5 +1,5 @@
 #!/tmp/bootimgtools/tools/bash
 tooldir=/tmp/bootimgtools/tools
-cd $tooldir/patimg/ramdisk
+cd $tooldir/kernel/ramdisk
 box=$tooldir/busybox
 $box sed -i '\|import /init.environ.rc|a import /init.initd.rc' init.rc

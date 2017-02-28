@@ -5,9 +5,20 @@ box=$tooldir/busybox
 $box dd if=/dev/block/platform/13540000.dwmmc0/by-name/BOOT of=$tooldir/boot.img
 $tooldir/bash wrapper boot.img patimg
 
+# fixes a bug
+cd kernel/
+$box unzip ramdisk.zip
+$box rm ramdisk.zip
+
+# system goes too fast, so we need to slow it down
+#sleep 2
+
 # new install method...only keep init.environ.rc and use J700F ramdisk
-cd patimg/ramdisk/
-mv init.environ.rc ../
+cd ../patimg/ramdisk/
+$box mv init.environ.rc $tooldir/kernel/ramdisk
 cd ..
-rm -rf ramdisk/
-rm zImage dt.img
+$box mv ramdisk.gz $tooldir/kernel
+
+cd $tooldir/kernel/ramdisk/sbin
+ln -s ../init ueventd
+ln -s ../init watchdogd

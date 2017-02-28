@@ -1,0 +1,19 @@
+#!/tmp/bootimgtools/tools/bash
+tooldir=/tmp/bootimgtools/tools
+box=$tooldir/busybox
+cd $tooldir/kernel/ramdisk
+
+# remove root
+$box sed -i '\|export PATH|d' init.environ.rc
+$box rm /data/su.img
+$box rm /data/stock_boot_*.gz
+# the * should fix a root bug people are still having
+$box rm -rf /data/app/eu.chainfire.supersu*
+$box rm /data/dalvik-cache/profiles/eu.chainfire.supersu
+$box rm -rf /data/data/eu.chainfire.supersu
+
+# remove old permissive install....just in case
+$box rm /system/etc/init.d/00permkernel
+
+# just in case...let the system catch up
+sleep 1s
