@@ -32,6 +32,7 @@ modules.builtin
 *.lzo
 *.patch
 *.gcno
+*.dtb
 
 #
 # Top-level generic files
@@ -66,6 +67,7 @@ arch/*/include/generated
 # Output files
 arch/arm64/boot/Image
 arch/arm64/boot/Image.gz
+afterburner/out
 
 # stgit generated dirs
 patches-*
