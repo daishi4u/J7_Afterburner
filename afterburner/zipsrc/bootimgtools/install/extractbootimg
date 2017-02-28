@@ -4,3 +4,10 @@ cd $tooldir
 box=$tooldir/busybox
 $box dd if=/dev/block/platform/13540000.dwmmc0/by-name/BOOT of=$tooldir/boot.img
 $tooldir/bash wrapper boot.img patimg
+
+# new install method...only keep init.environ.rc and use J700F ramdisk
+cd patimg/ramdisk/
+mv init.environ.rc ../
+cd ..
+rm -rf ramdisk/
+rm zImage dt.img

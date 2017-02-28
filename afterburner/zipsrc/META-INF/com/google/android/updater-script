@@ -19,9 +19,6 @@ set_progress(0.1);
 ui_print("Extracting boot image from device");
 run_program("/tmp/bootimgtools/install/extractbootimg");
 
-ui_print("Cleaning up previous installations");
-run_program("/tmp/bootimgtools/uninstall/rmfeatures");
-
 set_progress(0.2);
 
 ui_print("Patching boot image");
@@ -34,8 +31,6 @@ if file_getprop("/tmp/aroma-data/kernel.prop","item.1.3") == "1"
 then
     ui_print("Installing insecure adb");
     run_program("/tmp/bootimgtools/install/install-adb-insecure");
-else
-    package_extract_dir("stock/ramdisk", "/tmp/bootimgtools/tools/patimg/ramdisk");
 endif; 
 
 set_progress(0.4);

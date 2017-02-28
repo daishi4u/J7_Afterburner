@@ -2,11 +2,24 @@
 tooldir=/tmp/bootimgtools/tools
 box=$tooldir/busybox
 cd $tooldir/patimg/ramdisk
-$box rm *.ranchu* *.goldfish* init.container.rc sbin/knox_changer
-$box sed -i '\|write /proc/sys/kernel/sched_tunable_scaling 0|c write /proc/sys/kernel/sched_tunable_scaling 1' init.rc
+
+# new install method...we only keep init.environ.rc
+rm init.environ.rc
+mv ../init.environ.rc $tooldir/patimg/ramdisk
+
+# remove root
+$box sed -i '\|export PATH|d' init.environ.rc
+rm /data/su.img
+rm /data/stock_boot_*.gz
+# the * should fix a root bug people are still having
+rm -rf /data/app/eu.chainfire.supersu*
+rm /data/dalvik-cache/profiles/eu.chainfire.supersu
+rm -rf /data/data/eu.chainfire.supersu
+
+# remove old permissive install....just in case
+rm /system/etc/init.d/00permkernel
 
 # fix a bug
-cd $tooldir/patimg/ramdisk/sbin
-$box rm ueventd watchdogd
+cd sbin/
 ln -s ../init ueventd
 ln -s ../init watchdogd
