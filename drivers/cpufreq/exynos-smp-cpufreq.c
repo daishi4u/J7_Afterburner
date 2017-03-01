@@ -50,10 +50,11 @@
 
 #define DIV_MASK_ALL		0xffffffff
 #define LIMIT_COLD_VOLTAGE	1350000
-#define MIN_COLD_VOLTAGE 	950000
+#define MIN_COLD_VOLTAGE 	900000
 #define COLD_VOLT_OFFSET	37500
 // max frequency. 1700000 is as high as I could take the J7 without having reboot issues
 #define MY_MAX_FREQ         1700000
+#define MY_MIN_FREQ         200000
 
 #define APLL_FREQ(f, a0, a1, a2, a3, a4, a5, a6, b0, b1, m, p, s) \
 	{ \
@@ -113,6 +114,8 @@ static struct {
 	APLL_FREQ(500000,  0, 0, 7, 7, 2, 7, 3, 2, 7, 312, 4, 2),
 	APLL_FREQ(400000,  0, 0, 7, 7, 2, 7, 3, 2, 7, 248, 4, 2),
 	APLL_FREQ(300000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 368, 4, 3),
+	APLL_FREQ(200000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 240, 4, 3),
+	APLL_FREQ(100000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 256, 4, 4),
 };
 
 static unsigned int exynos_bus_table[] = {
@@ -132,6 +135,7 @@ static unsigned int exynos_bus_table[] = {
 	416000, /* 500MHz */
 	0,	/* 400MHz */
 	0,	/* 300MHz */
+	0,	/* 200MHz */
 };
 
 static unsigned int voltage_tolerance;	/* in percentage */
@@ -915,7 +919,7 @@ static int exynos_cpufreq_init(struct cpufreq_policy *policy)
 	voltage_tolerance = exynos_get_voltage_tolerance(cpu_dev);
 	policy->cur = exynos_cpufreq_get(policy->cpu);
 	/* Later this code will be removed. This is for first lot */
-	policy->cpuinfo.min_freq = 300000;
+	policy->cpuinfo.min_freq = MY_MIN_FREQ;
 
 	if (samsung_rev() == EXYNOS7580_REV_0) {
 		if (!support_full_frequency())
