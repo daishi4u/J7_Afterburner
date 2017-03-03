@@ -50,7 +50,7 @@
 
 #define DIV_MASK_ALL		0xffffffff
 #define LIMIT_COLD_VOLTAGE	1350000
-#define MIN_COLD_VOLTAGE 	900000
+#define MIN_COLD_VOLTAGE 	825000
 #define COLD_VOLT_OFFSET	37500
 // max frequency. 1700000 is as high as I could take the J7 without having reboot issues
 #define MY_MAX_FREQ         1700000
@@ -115,7 +115,7 @@ static struct {
 	APLL_FREQ(400000,  0, 0, 7, 7, 2, 7, 3, 2, 7, 248, 4, 2),
 	APLL_FREQ(300000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 368, 4, 3),
 	APLL_FREQ(200000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 240, 4, 3),
-	APLL_FREQ(100000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 256, 4, 4),
+	//APLL_FREQ(100000,  0, 0, 7, 7, 2, 7, 3, 1, 7, 256, 4, 4),		// lags
 };
 
 static unsigned int exynos_bus_table[] = {
@@ -136,6 +136,7 @@ static unsigned int exynos_bus_table[] = {
 	0,	/* 400MHz */
 	0,	/* 300MHz */
 	0,	/* 200MHz */
+	//0	/* 100MHz */
 };
 
 static unsigned int voltage_tolerance;	/* in percentage */

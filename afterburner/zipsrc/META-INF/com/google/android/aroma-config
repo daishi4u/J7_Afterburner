@@ -98,10 +98,10 @@ theme("touchwiz");
 # Initializing Rom Information
 #
 ini_set("rom_name",             "Afterburner kernel");
-ini_set("rom_version",          "2.0.7");
+ini_set("rom_version",          "2.1");
 ini_set("rom_author",           "Brett Wagner");
 ini_set("rom_device",           "J7 2015");
-ini_set("rom_date",             "Feb, 27 2017");
+ini_set("rom_date",             "Mar, 2 2017");
 
 
 ##
