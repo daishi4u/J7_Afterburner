@@ -1,7 +1,7 @@
 /*
  *
  * Automatically generated file; DO NOT EDIT.
- * Linux/arm64 3.10.61 Kernel Configuration
+ * Linux/arm64 3.10.105 Kernel Configuration
  *
  */
 /*

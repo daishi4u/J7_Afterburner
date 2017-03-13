@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KERNELDIR=/home/brett/android/j7kernel
+KERNELDIR=/home/brett/j7elte/j7kernel
 MYOUT=$KERNELDIR/arch/arm64/boot
 ABDIR=$KERNELDIR/afterburner
 MYTOOLS=$ABDIR/mkdtbhbootimg/bin
