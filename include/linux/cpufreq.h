@@ -346,6 +346,7 @@ struct kobject *get_governor_parent_kobj(struct cpufreq_policy *policy);
 #ifdef CONFIG_CPU_FREQ
 /* query the current CPU frequency (in kHz). If zero, cpufreq couldn't detect it */
 unsigned int cpufreq_get(unsigned int cpu);
+//unsigned int cpufreq_quick_get_util(unsigned int cpu);
 #else
 static inline unsigned int cpufreq_get(unsigned int cpu)
 {

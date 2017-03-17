@@ -127,11 +127,6 @@ config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
   	select CPU_FREQ_GOV_HYPER
   	help
 
-config CPU_FREQ_DEFAULT_GOV_XPERIENCE
-  	bool "xperience"
-  	select CPU_FREQ_GOV_XPERIENCE
-  	help
-
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -224,12 +219,6 @@ config CPU_FREQ_GOV_ZZMOOVE
   	depends on CPU_FREQ
   	help
     	'zzmoove' governor
-
-config CPU_FREQ_GOV_XPERIENCE
-  	tristate "'xperience' cpufreq governor"
-  	depends on CPU_FREQ
-  	help
-    	'xperience'  governor
 
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
