@@ -326,10 +326,7 @@ static ssize_t __ref thunderplug_load_store(struct kobject *kobj, struct kobj_at
 static unsigned int get_curr_load(unsigned int cpu)
 {
 	int ret;
-	unsigned int idle_time, wall_time;
 	unsigned int cur_load;
-	u64 cur_wall_time, cur_idle_time;
-	struct cpu_load_data *pcpu = &per_cpu(cpuload, cpu);
 	struct cpufreq_policy policy;
 
 	ret = cpufreq_get_policy(&policy, cpu);
