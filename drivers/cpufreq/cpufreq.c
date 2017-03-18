@@ -34,6 +34,8 @@
 
 #include <trace/events/power.h>
 
+#include "cpu_load_metric.h"
+
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
  * level driver of CPUFreq support, and its spinlock. This lock
@@ -1206,13 +1208,21 @@ static void cpufreq_out_of_sync(unsigned int cpu, unsigned int old_freq,
 */
 unsigned int cpufreq_quick_get_util(unsigned int cpu)
 {
-	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+	/*struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
 	unsigned int ret_util = 0;
 	if (policy) {
 		ret_util = policy->util;
 		cpufreq_cpu_put(policy);
 	}
-	return ret_util;
+	return ret_util;*/
+	
+	unsigned int ret_val = 0;
+	int *load, *freq;
+	cpu_load_metric_get(load, freq);
+	
+	ret_val = (unsigned int) *load;
+	
+	return ret_val;
 }
 EXPORT_SYMBOL(cpufreq_quick_get_util);
 

@@ -22,7 +22,7 @@
 #include <linux/lcd_notify.h>
 #include <linux/cpufreq.h>
 
-static int suspend_cpu_num = 2, resume_cpu_num = 7;
+static int suspend_cpu_num = 1, resume_cpu_num = 7;
 static int endurance_level = 0;
 static int device_cpus = 8;
 static int core_limit = 8;
@@ -48,7 +48,7 @@ static int now[8], last_time[8];
 static int sampling_time = DEF_SAMPLING_MS;
 static int load_threshold = CPU_LOAD_THRESHOLD;
 
-static int tplug_hp_enabled = 1;
+static int tplug_hp_enabled = 0;
 
 static int touch_boost_enabled = 0;
 

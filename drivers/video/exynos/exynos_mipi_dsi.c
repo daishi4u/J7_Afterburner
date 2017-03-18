@@ -34,10 +34,6 @@
 #include <linux/pm_runtime.h>
 #include <linux/err.h>
 
-#ifdef CONFIG_STATE_NOTIFIER
-#include <linux/state_notifier.h>
-#endif
-
 #include <video/exynos_mipi_dsim.h>
 
 #include "exynos_mipi_dsi_common.h"
@@ -517,10 +513,6 @@ static int exynos_mipi_dsi_suspend(struct device *dev)
 	exynos_mipi_regulator_disable(dsim);
 
 	dsim->suspended = true;
-	
-#ifdef CONFIG_STATE_NOTIFIER
- 	state_suspend();
- #endif
 
 	return 0;
 }
@@ -556,10 +548,6 @@ static int exynos_mipi_dsi_resume(struct device *dev)
 		client_drv->set_sequence(client_dev);
 
 	dsim->suspended = false;
-	
-#ifdef CONFIG_STATE_NOTIFIER
- 	state_resume();
- #endif
 
 	return 0;
 }

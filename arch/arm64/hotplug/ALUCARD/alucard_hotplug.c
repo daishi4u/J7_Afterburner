@@ -176,7 +176,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	defined(CONFIG_HAS_EARLYSUSPEND)
 	bool force_up = hotplug_tuners_ins.force_cpu_up;
 #endif
-	HOTPLUG_STATUS hotplug_onoff[NR_CPUS] = {IDLE, IDLE, IDLE, IDLE};
+	HOTPLUG_STATUS hotplug_onoff[NR_CPUS] = {IDLE, IDLE, IDLE, IDLE, IDLE, IDLE, IDLE, IDLE};
 	int delay;
 	int io_busy = hotplug_tuners_ins.hp_io_is_busy;
 

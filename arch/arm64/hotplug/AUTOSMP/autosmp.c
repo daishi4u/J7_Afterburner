@@ -134,10 +134,11 @@ static void asmp_power_suspend(struct power_suspend *h) {
 	unsigned int cpu;
 
 	/* unplug online cpu cores */
-	if (asmp_param.scroff_single_core)
+	if (asmp_param.scroff_single_core) {
 		for_each_present_cpu(cpu)
 			if (cpu && cpu_online(cpu))
 				cpu_down(cpu);
+	}
 
 	/* suspend main work thread */
 	if (enabled)

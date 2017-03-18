@@ -82,4 +82,3 @@ obj-$(CONFIG_TOUCHSCREEN_ZINITIX_BT532)	+= zinitix/
 obj-$(CONFIG_TOUCHSCREEN_ZINITIX_ZT75XX) += zinitix/
 obj-$(CONFIG_TOUCHSCREEN_ATMEL_MXT2405)    += mxt_t/
 obj-$(CONFIG_TOUCHSCREEN_SEC_TS)	+= sec_ts/
-obj-$(CONFIG_STATE_NOTIFIER)		+= state_notifier.o

@@ -33,7 +33,7 @@
 #define RESUME_SAMPLING_MS             HZ / 5
 #define START_DELAY_MS                 HZ * 50
 
-#define DEFAULT_MIN_CPUS_ONLINE        1
+#define DEFAULT_MIN_CPUS_ONLINE        2
 #define DEFAULT_MAX_CPUS_ONLINE        8
 #define DEFAULT_MIN_UP_TIME            1500
 
@@ -63,7 +63,7 @@ struct ip_cpu_info {
 static DEFINE_PER_CPU(struct ip_cpu_info, ip_info);
 
 /* HotPlug Driver controls */
-static atomic_t hima_hotplug_active = ATOMIC_INIT(1);
+static atomic_t hima_hotplug_active = ATOMIC_INIT(0);
 static unsigned int min_cpus_online = DEFAULT_MIN_CPUS_ONLINE;
 static unsigned int max_cpus_online = DEFAULT_MAX_CPUS_ONLINE;
 static unsigned int min_cpu_up_time = DEFAULT_MIN_UP_TIME;
@@ -207,7 +207,7 @@ static void hima_hotplug_work_fn(struct work_struct *work)
 
 static void __ref hima_hotplug_suspend(void)
 {
-	max_cpus_online = 3;
+	max_cpus_online = 2;
 	screen_on = 0;
 }
 
@@ -470,11 +470,11 @@ static void __exit hima_hotplug_exit(void)
 	sysfs_remove_group(kernel_kobj, &hima_hotplug_attr_group);
 }
 
-late_initcall(hima_hotplug_init);
-module_exit(hima_hotplug_exit);
-
 MODULE_AUTHOR("Paul Reioux <reioux@gmail.com>");
 MODULE_AUTHOR("Chad Cormier Roussel <chadcormierroussel@gmail.com>");
 MODULE_DESCRIPTION("An intelligent cpu hotplug driver for "
 	"Low Latency Frequency Transition capable processors");
 MODULE_LICENSE("GPLv2");
+
+late_initcall(hima_hotplug_init);
+module_exit(hima_hotplug_exit);
