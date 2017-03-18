@@ -63,6 +63,7 @@ core-$(CONFIG_THUNDERPLUG_CONTROL)	+= arch/arm64/hotplug/THUNDERPLUG/
 core-$(CONFIG_INTELLI_PLUG)	+= arch/arm64/hotplug/INTELLIPLUG/
 core-$(CONFIG_ALUCARD_HOTPLUG)	+= arch/arm64/hotplug/ALUCARD/
 core-$(CONFIG_MAKO_HOTPLUG)	+= arch/arm64/hotplug/MAKO/
+core-$(CONFIG_HIMA_HOTPLUG)	+= arch/arm64/hotplug/HIMA/
 core-y		+= $(machdirs) $(platdirs)
 libs-y		:= arch/arm64/lib/ $(libs-y)
 libs-y		+= $(LIBGCC)

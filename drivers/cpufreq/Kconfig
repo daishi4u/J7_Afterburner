@@ -124,7 +124,12 @@ config CPU_FREQ_DEFAULT_GOV_HYPER
 
 config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
   	bool "zzmoove"
-  	select CPU_FREQ_GOV_HYPER
+  	select CPU_FREQ_GOV_ZZMOOVE
+  	help
+
+config CPU_FREQ_DEFAULT_GOV_LIONFISH
+  	bool "lionfish"
+  	select CPU_FREQ_GOV_LIONFISH
   	help
 
 endchoice
@@ -219,6 +224,12 @@ config CPU_FREQ_GOV_ZZMOOVE
   	depends on CPU_FREQ
   	help
     	'zzmoove' governor
+
+config CPU_FREQ_GOV_LIONFISH
+  	tristate "'lionfish' cpufreq governor"
+  	depends on CPU_FREQ
+  	help
+    	'lionfish' governor
 
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"

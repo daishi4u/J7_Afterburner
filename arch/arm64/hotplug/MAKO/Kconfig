@@ -1,5 +1,5 @@
 config MAKO_HOTPLUG
     bool "Mako Hotplug"
-    default y
+    default n
     help
       Mako Hotplug: A custom hotplug by fransico franco

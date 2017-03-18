@@ -23,6 +23,8 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 
+#define CONFIG_ALUCARD_HOTPLUG_USE_CPU_UTIL
+
 #if defined(CONFIG_POWERSUSPEND)
 #include <linux/powersuspend.h>
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
