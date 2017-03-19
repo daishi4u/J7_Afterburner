@@ -562,5 +562,9 @@ static void __exit mako_hotplug_exit(void)
 	platform_driver_unregister(&mako_hotplug_driver);
 }
 
+MODULE_AUTHOR("Francisco Franco <franciscofranco.1990@gmail.com>");
+MODULE_DESCRIPTION("'Mako hotplug' ported to J7");
+MODULE_LICENSE("GPL");
+
 late_initcall(mako_hotplug_init);
 module_exit(mako_hotplug_exit);
