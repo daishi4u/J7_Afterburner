@@ -178,7 +178,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 #endif
 	HOTPLUG_STATUS hotplug_onoff[NR_CPUS] = {IDLE, IDLE, IDLE, IDLE, IDLE, IDLE, IDLE, IDLE};
 	int delay;
-	int io_busy = hotplug_tuners_ins.hp_io_is_busy;
+	//int io_busy = hotplug_tuners_ins.hp_io_is_busy;
 
 	rq_avg = get_nr_run_avg();
 
@@ -718,7 +718,7 @@ static ssize_t store_maxcoreslimit_sleep(struct kobject *a,
 static ssize_t store_hp_io_is_busy(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
 {
-	unsigned int input, j;
+	unsigned int input; //, j;
 	int ret;
 
 	ret = sscanf(buf, "%u", &input);

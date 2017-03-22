@@ -107,7 +107,7 @@ struct cpu_load_data {
 	cpumask_var_t related_cpus;
 };
 
-static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
+//static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 
 
 /* Two Endurance Levels for Octa Cores,
@@ -172,18 +172,19 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 	int cpu, ret;
 	for(cpu = 1; cpu < NR_CPUS; cpu++) {
 #ifdef CONFIG_SCHED_HMP
-    if(tplug_hp_style == 1)
+		if(tplug_hp_style == 1) {
 #else
-	if(tplug_hp_enabled == 1)
+		if(tplug_hp_enabled == 1) {
 #endif
-		if(cpu_is_offline(cpu))
-			cpu_up(cpu);
-		ret = cpufreq_get_policy(&policy, cpu);
-		if (ret)
-			continue;
-		old_policy[cpu] = policy;
-		policy.min = policy.max;
-		cpufreq_update_policy(cpu);
+			if(cpu_is_offline(cpu))
+				cpu_up(cpu);
+			ret = cpufreq_get_policy(&policy, cpu);
+			if (ret)
+				continue;
+			old_policy[cpu] = policy;
+			policy.min = policy.max;
+			cpufreq_update_policy(cpu);
+		}
 	}
 	if(stop_boost == 0)
 	queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,

@@ -21,7 +21,7 @@
  */
 
 #include <linux/moduleparam.h>
-#include <linux/new_exp_suspend.h>
+#include <linux/powersuspend.h>
 #include <linux/cpufreq.h>
 #include <linux/workqueue.h>
 #include <linux/cpu.h>
@@ -136,8 +136,10 @@ static void asmp_power_suspend(struct power_suspend *h) {
 	/* unplug online cpu cores */
 	if (asmp_param.scroff_single_core) {
 		for_each_present_cpu(cpu)
+{
 			if (cpu && cpu_online(cpu))
 				cpu_down(cpu);
+      }
 	}
 
 	/* suspend main work thread */
@@ -167,7 +169,6 @@ static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 }
 
 static struct power_suspend __refdata asmp_power_suspend_handler = {
-	.level = POWER_SUSPEND_LEVEL_BLANK_SCREEN,
 	.suspend = asmp_power_suspend,
 	.resume = asmp_late_resume,
 };
