@@ -207,9 +207,13 @@ static void __ref intelli_plug_boost_fn(struct work_struct *work)
 	int nr_cpus = num_online_cpus();
 
 	if (intelli_plug_active)
+	{
 		if (touch_boost_active)
+		{
 			if (nr_cpus < 2)
 				cpu_up(1);
+		}
+	}
 }
 
 /*
@@ -247,8 +251,10 @@ static void unplug_cpu(int min_active_cpu)
 			continue;
 		l_ip_info = &per_cpu(ip_info, cpu);
 		if (cpu > min_active_cpu)
+		{
 			if (l_ip_info->cpu_nr_running < l_nr_threshold)
 				cpu_down(cpu);
+		}
 	}
 }
 
@@ -494,9 +500,10 @@ static void __ref intelli_plug_resume(struct power_suspend *handler)
 
 		wakeup_boost();
 		screen_off_limit(false);
+	
+		queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
+			msecs_to_jiffies(10));
 	}
-	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
-		msecs_to_jiffies(10));
 }
 #endif
 

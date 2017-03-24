@@ -215,43 +215,45 @@ static int mp_decision(void) {
 static void __ref bricked_hotplug_work(struct work_struct *work) {
 	unsigned int cpu;
 
-	if (hotplug.suspended && hotplug.max_cpus_online_susp <= 1)
-		goto out;
+	if (hotplug.bricked_enabled) {
+	
+		if (hotplug.suspended && hotplug.max_cpus_online_susp <= 1)
+			goto out;
 
-	if (!mutex_trylock(&hotplug.bricked_cpu_mutex))
-		goto out;
+		if (!mutex_trylock(&hotplug.bricked_cpu_mutex))
+			goto out;
 
-	state = mp_decision();
-	switch (state) {
-	case MSM_MPDEC_DISABLED:
-	case MSM_MPDEC_IDLE:
-		break;
-	case MSM_MPDEC_DOWN:
-		cpu = get_slowest_cpu();
-		if (cpu > 0) {
-			if (cpu_online(cpu) && !check_down_lock(cpu))
-				cpu_down(cpu);
+		state = mp_decision();
+		switch (state) {
+			case MSM_MPDEC_DISABLED:
+			case MSM_MPDEC_IDLE:
+				break;
+			case MSM_MPDEC_DOWN:
+				cpu = get_slowest_cpu();
+				if (cpu > 0) {
+					if (cpu_online(cpu) && !check_down_lock(cpu))
+						cpu_down(cpu);
+				}
+				break;
+			case MSM_MPDEC_UP:
+				cpu = cpumask_next_zero(0, cpu_online_mask);
+				if (cpu < DEFAULT_MAX_CPUS_ONLINE) {
+					if (!cpu_online(cpu)) {
+						cpu_up(cpu);
+						apply_down_lock(cpu);
+					}
+				}
+				break;
+			default:
+				pr_err(MPDEC_TAG": %s: invalid mpdec hotplug state %d\n",
+					__func__, state);
 		}
-		break;
-	case MSM_MPDEC_UP:
-		cpu = cpumask_next_zero(0, cpu_online_mask);
-		if (cpu < DEFAULT_MAX_CPUS_ONLINE) {
-			if (!cpu_online(cpu)) {
-				cpu_up(cpu);
-				apply_down_lock(cpu);
-			}
-		}
-		break;
-	default:
-		pr_err(MPDEC_TAG": %s: invalid mpdec hotplug state %d\n",
-			__func__, state);
-	}
-	mutex_unlock(&hotplug.bricked_cpu_mutex);
+		mutex_unlock(&hotplug.bricked_cpu_mutex);
 
-out:
-	if (hotplug.bricked_enabled)
+out:	
 		queue_delayed_work(hotplug_wq, &hotplug_work,
 					msecs_to_jiffies(hotplug.delay));
+	}
 	return;
 }
 

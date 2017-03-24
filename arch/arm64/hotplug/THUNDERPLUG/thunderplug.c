@@ -92,9 +92,6 @@ static struct delayed_work tplug_work;
 static struct workqueue_struct *tplug_boost_wq;
 static struct delayed_work tplug_boost;
 
-static struct workqueue_struct *tplug_resume_wq;
-static struct delayed_work tplug_resume_work;
-
 static unsigned int last_load[8] = { 0 };
 
 struct cpu_load_data {
@@ -170,12 +167,13 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 {
 	struct cpufreq_policy policy;
 	int cpu, ret;
-	for(cpu = 1; cpu < NR_CPUS; cpu++) {
+
 #ifdef CONFIG_SCHED_HMP
-		if(tplug_hp_style == 1) {
+	if(tplug_hp_style == 1) {
 #else
-		if(tplug_hp_enabled == 1) {
+	if(tplug_hp_enabled == 1) {
 #endif
+	   for(cpu = 1; cpu < NR_CPUS; cpu++) {
 			if(cpu_is_offline(cpu))
 				cpu_up(cpu);
 			ret = cpufreq_get_policy(&policy, cpu);
@@ -185,41 +183,47 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 			policy.min = policy.max;
 			cpufreq_update_policy(cpu);
 		}
+   //if(stop_boost == 0)
+	//queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
+			//msecs_to_jiffies(10));
 	}
-	if(stop_boost == 0)
-	queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
-			msecs_to_jiffies(10));
 }
 
 static void tplug_input_event(struct input_handle *handle, unsigned int type,
 		unsigned int code, int value)
 {
-	if (type == EV_KEY && code == BTN_TOUCH) {
-		if(DEBUG)
-			pr_info("%s : type = %d, code = %d, value = %d\n", THUNDERPLUG, type, code, value);
-		if(value == 0) {
-			stop_boost = 1;
-			if(DEBUG)
-				pr_info("%s: stopping boost\n", THUNDERPLUG);
-		}
-		else {
-			stop_boost = 0;
-			if(DEBUG)
-				pr_info("%s: starting boost\n", THUNDERPLUG);
-		}
-	}
 #ifdef CONFIG_SCHED_HMP
-    if ((type == EV_KEY) && (code == BTN_TOUCH) && (value == 1)
-		&& touch_boost_enabled == 1)
+	if(tplug_hp_style == 1) {
 #else
-	if ((type == EV_KEY) && (code == BTN_TOUCH) && (value == 1)
-		&& touch_boost_enabled == 1)
+	if(tplug_hp_enabled == 1) {
 #endif
-	{
-		if(DEBUG)
-			pr_info("%s : touch boost\n", THUNDERPLUG);
-		queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
-			msecs_to_jiffies(0));
+		if (type == EV_KEY && code == BTN_TOUCH) {
+			if(DEBUG)
+				pr_info("%s : type = %d, code = %d, value = %d\n", THUNDERPLUG, type, code, value);
+			if(value == 0) {
+				stop_boost = 1;
+				if(DEBUG)
+					pr_info("%s: stopping boost\n", THUNDERPLUG);
+			}
+			else {
+				stop_boost = 0;
+				if(DEBUG)
+					pr_info("%s: starting boost\n", THUNDERPLUG);
+			}
+		}
+#ifdef CONFIG_SCHED_HMP
+		if ((type == EV_KEY) && (code == BTN_TOUCH) && (value == 1)
+			&& touch_boost_enabled == 1)
+#else
+		if ((type == EV_KEY) && (code == BTN_TOUCH) && (value == 1)
+			&& touch_boost_enabled == 1)
+#endif
+		{
+			if(DEBUG)
+				pr_info("%s : touch boost\n", THUNDERPLUG);
+			queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
+				msecs_to_jiffies(0));
+		}
 	}
 }
 
@@ -304,21 +308,20 @@ static ssize_t __ref thunderplug_endurance_store(struct kobject *kobj, struct ko
 #else
 	if(tplug_hp_enabled) {
 #endif
-	switch(val) {
-	case 0:
-	case 1:
-	case 2:
-		if(endurance_level!=val &&
-		   !(endurance_level > 1 && NR_CPUS < 4)) {
-		endurance_level = val;
-		offline_cpus();
-		cpus_online_all();
-	}
-	break;
-	default:
-		pr_info("%s: invalid endurance level\n", THUNDERPLUG);
-	break;
-	}
+		switch(val) {
+		case 0:
+		case 1:
+		case 2:
+			if(endurance_level!=val && !(endurance_level > 1 && NR_CPUS < 4)) {
+				endurance_level = val;
+				offline_cpus();
+				cpus_online_all();
+			}
+		break;
+		default:
+			pr_info("%s: invalid endurance level\n", THUNDERPLUG);
+		break;
+		}
 	}
 	else
 	   pr_info("%s: per-core hotplug style is disabled, ignoring endurance mode values\n", THUNDERPLUG);
@@ -413,20 +416,6 @@ static void enable_gpu_cores(int num) {
 }
 #endif
 
-static unsigned int get_curr_load(unsigned int cpu)
-{
-	int ret;
-	unsigned int cur_load;
-	struct cpufreq_policy policy;
-
-	ret = cpufreq_get_policy(&policy, cpu);
-	if (ret)
-		return -EINVAL;
-
-	cur_load = cpufreq_quick_get_util(cpu);
-	return cur_load;
-}
-
 static void thunderplug_suspend(void)
 {
 	offline_cpus();
@@ -434,22 +423,17 @@ static void thunderplug_suspend(void)
 	pr_info("%s: suspend\n", THUNDERPLUG);
 }
 
-static void __ref thunderplug_resume(void)
-{
-	cpus_online_all();
-
-	pr_info("%s: resume\n", THUNDERPLUG);
-}
-
-static void __cpuinit tplug_resume_work_fn(struct work_struct *work)
-{
-	thunderplug_resume();
-}
-
 static void __cpuinit tplug_work_fn(struct work_struct *work)
 {
 	int i;
 	unsigned int load[8], avg_load[8];
+
+#ifdef CONFIG_SCHED_HMP
+    if(tplug_hp_style == 0)
+#else
+	if(tplug_hp_enabled == 0)
+#endif
+		return;
 
 	switch(endurance_level)
 	{
@@ -470,7 +454,7 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 	for(i = 0 ; i < core_limit; i++)
 	{
 		if(cpu_online(i))
-			load[i] = get_curr_load(i);
+			load[i] = cpufreq_quick_get_util(i);
 		else
 			load[i] = 0;
 
@@ -480,15 +464,15 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 
 	for(i = 0 ; i < core_limit; i++)
 	{
-	if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
-	{
-	if(DEBUG)
-		pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
-		if(!((i+1) > 7)) {
-			last_time[i+1] = ktime_to_ms(ktime_get());
-			cpu_up(i+1);
+		if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
+		{
+			if(DEBUG)
+				pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
+			if(!((i+1) > 7)) {
+				last_time[i+1] = ktime_to_ms(ktime_get());
+				cpu_up(i+1);
+			}
 		}
-	}
 	else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
 	{
 		if(DEBUG)
@@ -521,20 +505,12 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 	}
 #endif
 
-#ifdef CONFIG_SCHED_HMP
-    if(tplug_hp_style == 1 && !isSuspended)
-#else
-	if(tplug_hp_enabled != 0 && !isSuspended)
-#endif
-		queue_delayed_work_on(0, tplug_wq, &tplug_work,
-			msecs_to_jiffies(sampling_time));
-	else {
-		if(!isSuspended)
-			cpus_online_all();
-		else
-			thunderplug_suspend();
+	if(!isSuspended) {
+		queue_delayed_work_on(0, tplug_wq, &tplug_work,	msecs_to_jiffies(sampling_time));
+		//cpus_online_all();
 	}
-
+	else
+		thunderplug_suspend();
 }
 
 static void tplug_es_suspend_work(struct power_suspend *p) {
@@ -543,18 +519,18 @@ static void tplug_es_suspend_work(struct power_suspend *p) {
 }
 
 static void tplug_es_resume_work(struct power_suspend *p) {
-	isSuspended = false;
 #ifdef CONFIG_SCHED_HMP
-	if(tplug_hp_style==1)
+	if(tplug_hp_style==1) {
 #else
-	if(tplug_hp_enabled)
+	if(tplug_hp_enabled) {
 #endif
-	queue_delayed_work_on(0, tplug_wq, &tplug_work,
+     isSuspended = false;
+		queue_delayed_work_on(0, tplug_wq, &tplug_work,
 					msecs_to_jiffies(sampling_time));
-	else
-		queue_delayed_work_on(0, tplug_resume_wq, &tplug_resume_work,
-		            msecs_to_jiffies(10));
-	pr_info("thunderplug : resume called\n");
+      cpus_online_all();
+
+	    pr_info("%s: resume\n", THUNDERPLUG);
+   }
 }
 
 static struct power_suspend tplug_power_suspend_handler = 
@@ -811,14 +787,10 @@ static int __init thunderplug_init(void)
 		tplug_wq = alloc_workqueue("tplug",
 				WQ_HIGHPRI | WQ_UNBOUND, 1);
 
-		tplug_resume_wq = alloc_workqueue("tplug_resume",
-				WQ_HIGHPRI | WQ_UNBOUND, 1);
-
 		tplug_boost_wq = alloc_workqueue("tplug_boost",
 				WQ_HIGHPRI | WQ_UNBOUND, 1);
 
 		INIT_DELAYED_WORK(&tplug_work, tplug_work_fn);
-		INIT_DELAYED_WORK(&tplug_resume_work, tplug_resume_work_fn);
 		INIT_DELAYED_WORK(&tplug_boost, tplug_boost_work_fn);
 		queue_delayed_work_on(0, tplug_wq, &tplug_work,
 		                      msecs_to_jiffies(10));
