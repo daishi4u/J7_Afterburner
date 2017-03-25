@@ -111,7 +111,7 @@ struct cpu_load_data {
  * Two for Quad Cores and
  * One for Dual
  */
-static inline void offline_cpus(void)
+static void offline_cpus(void)
 {
 	unsigned int cpu;
 	switch(endurance_level) {
@@ -133,7 +133,7 @@ static inline void offline_cpus(void)
 	pr_info("%s: %d cpus were offlined\n", THUNDERPLUG, (NR_CPUS - suspend_cpu_num));
 }
 
-static inline void cpus_online_all(void)
+static void __cpuinit cpus_online_all(void)
 {
 	unsigned int cpu;
 	switch(endurance_level) {
@@ -520,7 +520,7 @@ static void tplug_es_suspend_work(struct power_suspend *p) {
 	}
 }
 
-static void tplug_es_resume_work(struct power_suspend *p) {
+static void __cpuinit tplug_es_resume_work(struct power_suspend *p) {
 #ifdef CONFIG_SCHED_HMP
 	if(tplug_hp_style==1) {
 #else
@@ -533,7 +533,7 @@ static void tplug_es_resume_work(struct power_suspend *p) {
    }
 }
 
-static struct power_suspend tplug_power_suspend_handler = 
+static struct power_suspend __refdata tplug_power_suspend_handler = 
 	{
 		.suspend = tplug_es_suspend_work,
 		.resume = tplug_es_resume_work,
