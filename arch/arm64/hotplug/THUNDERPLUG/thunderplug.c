@@ -183,9 +183,9 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 			policy.min = policy.max;
 			cpufreq_update_policy(cpu);
 		}
-   //if(stop_boost == 0)
-	//queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
-			//msecs_to_jiffies(10));
+		if(stop_boost == 0)
+			queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
+				msecs_to_jiffies(10));
 	}
 }
 
@@ -416,13 +416,6 @@ static void enable_gpu_cores(int num) {
 }
 #endif
 
-static void thunderplug_suspend(void)
-{
-	offline_cpus();
-
-	pr_info("%s: suspend\n", THUNDERPLUG);
-}
-
 static void __cpuinit tplug_work_fn(struct work_struct *work)
 {
 	int i;
@@ -450,37 +443,44 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 		core_limit = NR_CPUS;
 	break;
 	}
-
-	for(i = 0 ; i < core_limit; i++)
+	
+	if (isSuspended)
 	{
-		if(cpu_online(i))
-			load[i] = cpufreq_quick_get_util(i);
-		else
-			load[i] = 0;
-
-		avg_load[i] = ((int) load[i] + (int) last_load[i]) / 2;
-		last_load[i] = load[i];
+		offline_cpus();
 	}
-
-	for(i = 0 ; i < core_limit; i++)
+	else
 	{
-		if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
+		for(i = 0 ; i < core_limit; i++)
 		{
-			if(DEBUG)
-				pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
-			if(!((i+1) > 7)) {
-				last_time[i+1] = ktime_to_ms(ktime_get());
-				cpu_up(i+1);
-			}
+			if(cpu_online(i))
+				load[i] = cpufreq_quick_get_util(i);
+			else
+				load[i] = 0;
+
+			avg_load[i] = ((int) load[i] + (int) last_load[i]) / 2;
+			last_load[i] = load[i];
 		}
-	else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
-	{
-		if(DEBUG)
-			pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
-			if(!(i+1)==0) {
-				now[i+1] = ktime_to_ms(ktime_get());
-				if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
-					cpu_down(i+1);
+
+		for(i = 0 ; i < core_limit; i++)
+		{
+			if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
+			{
+				if(DEBUG)
+					pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
+				if(!((i+1) > 7)) {
+					last_time[i+1] = ktime_to_ms(ktime_get());
+					cpu_up(i+1);
+				}
+			}
+			else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
+			{
+				if(DEBUG)
+					pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
+				if(!(i+1)==0) {
+					now[i+1] = ktime_to_ms(ktime_get());
+					if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
+						cpu_down(i+1);
+				}
 			}
 		}
 	}
@@ -505,17 +505,19 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 	}
 #endif
 
-	if(!isSuspended) {
-		queue_delayed_work_on(0, tplug_wq, &tplug_work,	msecs_to_jiffies(sampling_time));
-		//cpus_online_all();
-	}
-	else
-		thunderplug_suspend();
+	queue_delayed_work_on(0, tplug_wq, &tplug_work,	msecs_to_jiffies(sampling_time));
 }
 
 static void tplug_es_suspend_work(struct power_suspend *p) {
-	isSuspended = true;
-	pr_info("thunderplug : suspend called\n");
+	#ifdef CONFIG_SCHED_HMP
+	if(tplug_hp_style==1) {
+#else
+	if(tplug_hp_enabled) {
+#endif
+		isSuspended = true;
+		
+		pr_info("thunderplug : suspend called\n");
+	}
 }
 
 static void tplug_es_resume_work(struct power_suspend *p) {
@@ -524,10 +526,8 @@ static void tplug_es_resume_work(struct power_suspend *p) {
 #else
 	if(tplug_hp_enabled) {
 #endif
-     isSuspended = false;
-		queue_delayed_work_on(0, tplug_wq, &tplug_work,
-					msecs_to_jiffies(sampling_time));
-      cpus_online_all();
+		isSuspended = false;
+		cpus_online_all();
 
 	    pr_info("%s: resume\n", THUNDERPLUG);
    }
@@ -642,6 +642,8 @@ static ssize_t __ref thunderplug_hp_enabled_store(struct kobject *kobj, struct k
 	if(tplug_hp_enabled == 1 && tplug_hp_enabled != last_val)
 		queue_delayed_work_on(0, tplug_wq, &tplug_work,
 							msecs_to_jiffies(sampling_time));
+	else if(tplug_hp_enabled == 0 && tplug_hp_enabled != last_val)
+		cancel_delayed_work_sync(&tplug_work);
 
 	return count;
 }
@@ -792,7 +794,9 @@ static int __init thunderplug_init(void)
 
 		INIT_DELAYED_WORK(&tplug_work, tplug_work_fn);
 		INIT_DELAYED_WORK(&tplug_boost, tplug_boost_work_fn);
-		queue_delayed_work_on(0, tplug_wq, &tplug_work,
+		
+		if (tplug_hp_enabled)
+			queue_delayed_work_on(0, tplug_wq, &tplug_work,
 		                      msecs_to_jiffies(10));
 
         pr_info("%s: init\n", THUNDERPLUG);
