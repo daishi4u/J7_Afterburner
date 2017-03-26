@@ -23,6 +23,8 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 
+#include "../stock_hotplug.h"
+
 #define CONFIG_ALUCARD_HOTPLUG_USE_CPU_UTIL
 
 #if defined(CONFIG_POWERSUSPEND)
@@ -643,9 +645,15 @@ static ssize_t store_hotplug_enable(struct kobject *a, struct attribute *b,
 		return count;
 
 	if (input > 0)
+	{
+		stock_hotplug_enabled = 0;
 		cpus_hotplugging(1);
+	}
 	else
+	{
+		stock_hotplug_enabled = 1;
 		cpus_hotplugging(0);
+	}
 
 	return count;
 }
@@ -890,6 +898,7 @@ static int __init alucard_hotplug_init(void)
 	}
 
 	if (hotplug_tuners_ins.hotplug_enable > 0) {
+		stock_hotplug_enabled = 0;
 		hotplug_start();
 	}
 

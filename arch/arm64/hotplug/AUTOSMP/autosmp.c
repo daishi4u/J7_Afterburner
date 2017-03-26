@@ -28,6 +28,8 @@
 #include <linux/cpumask.h>
 #include <linux/hrtimer.h>
 
+#include "../stock_hotplug.h"
+
 #define DEBUG 0
 
 #define ASMP_TAG "AutoSMP: "
@@ -186,6 +188,7 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 
 	ret = param_set_bool(val, kp);
 	if (enabled) {
+		stock_hotplug_enabled = 0;
 		queue_delayed_work(asmp_workq, &asmp_work,
 				msecs_to_jiffies(asmp_param.delay));
 		pr_info(ASMP_TAG"enabled\n");
@@ -196,6 +199,7 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 				break;
 			if (!cpu_online(cpu))
 				cpu_up(cpu);
+		stock_hotplug_enabled = 1;
 		}
 		pr_info(ASMP_TAG"disabled\n");
 	}
@@ -313,8 +317,11 @@ static int __init asmp_init(void) {
 		return -ENOMEM;
 	INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
 	if (enabled)
+	{
+		stock_hotplug_enabled = 0;
 		queue_delayed_work(asmp_workq, &asmp_work,
 				   msecs_to_jiffies(ASMP_STARTDELAY));
+	}
 
 	register_power_suspend(&asmp_power_suspend_handler);
 
