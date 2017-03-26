@@ -3005,10 +3005,8 @@ static ssize_t store_sampling_rate_idle_delay(struct kobject *a, struct attribut
 	    return -EINVAL;
 
 	if (input == 0)
-	{
 	    sampling_rate_step_up_delay = 0;
 	    sampling_rate_step_down_delay = 0;
-	}
 
 #ifdef ENABLE_PROFILES_SUPPORT
 	// ZZ: set profile number to 0 and profile name to custom mode if value has changed
@@ -7714,7 +7712,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	    // ZZ: Sampling down momentum - if momentum is inactive switch to 'down_skip' method
 	    if (zz_sampling_down_max_mom == 0 && zz_sampling_down_factor > 1)
-			this_dbs_info->down_skip = 0;
+		this_dbs_info->down_skip = 0;
 
 		// ZZ: Frequency Limit: if we are at freq_limit break out early
 		if (dbs_tuners_ins.freq_limit != 0
@@ -7737,7 +7735,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	    // ZZ: Sampling down momentum - if momentum is active and we are switching to max speed, apply sampling_down_factor
 	    if (zz_sampling_down_max_mom != 0 && policy->cur < policy->max)
-			this_dbs_info->rate_mult = zz_sampling_down_factor;
+		this_dbs_info->rate_mult = zz_sampling_down_factor;
 
 		this_dbs_info->requested_freq = zz_get_next_freq(policy->cur, 1, max_load);
 
@@ -8760,7 +8758,7 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		    // policy latency is in nS. Convert it to uS first
 		    latency = policy->cpuinfo.transition_latency / 1000;
 		    if (latency == 0)
-				latency = 1;
+			latency = 1;
 
 			rc = sysfs_create_group(cpufreq_global_kobject,
 						&dbs_attr_group);

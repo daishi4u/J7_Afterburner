@@ -25,8 +25,6 @@
 #include <linux/powersuspend.h>
 #include "thunderplug.h"
 
-#include "../stock_hotplug.h"
-
 #define DEBUG                        0
 
 #define THUNDERPLUG                  "thunderplug"
@@ -642,16 +640,10 @@ static ssize_t __ref thunderplug_hp_enabled_store(struct kobject *kobj, struct k
 	}
 
 	if(tplug_hp_enabled == 1 && tplug_hp_enabled != last_val)
-	{
-		stock_hotplug_enabled = 0;
 		queue_delayed_work_on(0, tplug_wq, &tplug_work,
 							msecs_to_jiffies(sampling_time));
-	}
 	else if(tplug_hp_enabled == 0 && tplug_hp_enabled != last_val)
-	{
-		stock_hotplug_enabled = 1;
 		cancel_delayed_work_sync(&tplug_work);
-	}
 
 	return count;
 }
@@ -804,11 +796,8 @@ static int __init thunderplug_init(void)
 		INIT_DELAYED_WORK(&tplug_boost, tplug_boost_work_fn);
 		
 		if (tplug_hp_enabled)
-		{
-			stock_hotplug_enabled = 0;
 			queue_delayed_work_on(0, tplug_wq, &tplug_work,
 		                      msecs_to_jiffies(10));
-		}
 
         pr_info("%s: init\n", THUNDERPLUG);
 

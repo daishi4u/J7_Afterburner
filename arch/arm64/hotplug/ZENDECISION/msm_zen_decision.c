@@ -26,8 +26,6 @@
 #include <linux/workqueue.h>
 #include <linux/power_supply.h>
 
-#include "../stock_hotplug.h"
-
 #define ZEN_DECISION "zen_decision"
 
 /*
@@ -168,15 +166,9 @@ static ssize_t enable_store(struct kobject *kobj,
 		return ret;
 
 	if (new_val > 0)
-	{
-		stock_hotplug_enabled = 0;
 		enabled = 1;
-	}
 	else
-	{
-		stock_hotplug_enabled = 1;
 		enabled = 0;
-	}
 
 	return size;
 }

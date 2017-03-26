@@ -1,8 +1,3 @@
-/*
-*
-* The stock CPU hotplug for the 7850
-*
-*/
 #include <linux/atomic.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
@@ -12,10 +7,6 @@
 #include <linux/sched.h>
 #include <linux/suspend.h>
 #include <linux/pm_qos.h>
-//#include "../stock_hotplug.h"
-
-//#include <linux/powersuspend.h>	// work on this later
-int stock_hotplug_enabled = 1;
 
 static struct delayed_work exynos_hotplug;
 static struct delayed_work start_hotplug;
@@ -256,6 +247,15 @@ static void hotplug_enter_hstate(bool force, enum hstate state)
 	ctrl_hotplug.cur_hstate = state;
 }
 
+void exynos_dm_hotplug_disable(void)
+{
+	/* Reserved Function */
+}
+
+void exynos_dm_hotplug_enable(void)
+{
+	/* Reserved Function */
+}
 
 void exynos_dc_hotplug_control(int state)
 {
@@ -397,14 +397,12 @@ static void exynos_work(struct work_struct *dwork)
 	enum hstate target_state;
 
 	mutex_lock(&hotplug_lock);
-	
-	if (stock_hotplug_enabled == 1)
-	{
-		target_state = hotplug_adjust_state(move);
-		if ((get_core_count(ctrl_hotplug.old_state) != num_online_cpus())
-			|| (move != STAY))
-			hotplug_enter_hstate(false, target_state);
-	}
+
+	target_state = hotplug_adjust_state(move);
+	if ((get_core_count(ctrl_hotplug.old_state) != num_online_cpus())
+		|| (move != STAY))
+		hotplug_enter_hstate(false, target_state);
+
 	queue_delayed_work_on(0, khotplug_wq, &exynos_hotplug, msecs_to_jiffies(ctrl_hotplug.sampling_rate));
 	mutex_unlock(&hotplug_lock);
 }
@@ -494,9 +492,6 @@ define_show_state_function(min_lock)
 define_show_state_function(max_lock)
 
 define_show_state_function(cur_hstate)
-
-//define_show_state_function(enabled)
-//define_store_state_function(enabled)
 
 define_show_state_function(force_hstate)
 void __set_force_hstate(int target_state)

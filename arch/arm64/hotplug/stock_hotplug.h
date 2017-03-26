@@ -1,1 +1,0 @@
-extern int stock_hotplug_enabled;
