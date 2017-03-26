@@ -190,7 +190,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 #endif
 		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit;
 
-	get_online_cpus();
+	//get_online_cpus();
 	online_cpus = num_online_cpus();
 	for_each_online_cpu(cpu) {
 		struct hotplug_cpuinfo *pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
@@ -305,7 +305,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 			}
 		}
 	}
-	put_online_cpus();
+	//put_online_cpus();
 
 	for (cpu = 1; cpu < NR_CPUS; cpu++) {
 		if (hotplug_onoff[cpu] == ON)
@@ -403,7 +403,7 @@ static int hotplug_start(void)
 	hotplug_tuners_ins.force_cpu_up = false;
 #endif
 
-	get_online_cpus();
+	//get_online_cpus();
 	for_each_possible_cpu(cpu) {
 		struct hotplug_cpuinfo *pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 
@@ -414,7 +414,7 @@ static int hotplug_start(void)
 		pcpu_info->cur_up_rate = 1;
 		pcpu_info->cur_down_rate = 1;
 	}
-	put_online_cpus();
+	//put_online_cpus();
 
 	init_rq_avg_stats();
 	INIT_DELAYED_WORK(&alucard_hotplug_work, hotplug_work_fn);

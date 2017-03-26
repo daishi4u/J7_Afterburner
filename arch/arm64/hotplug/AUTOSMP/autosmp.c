@@ -53,7 +53,7 @@ static struct asmp_param_struct {
 } asmp_param = {
 	.delay = 100,
 	.scroff_single_core = true,
-	.max_cpus = CONFIG_NR_CPUS,
+	.max_cpus = NR_CPUS,
 	.min_cpus = 2,
 // one makes the j7 lag
 	.cpufreq_up = 90,
@@ -88,7 +88,7 @@ static void __cpuinit asmp_work_fn(struct work_struct *work) {
 		down_rate = asmp_param.cpufreq_down*max_rate/100;
 
 		/* find current max and min cpu freq to estimate load */
-		get_online_cpus();
+		//get_online_cpus();
 		nr_cpu_online = num_online_cpus();
 		cpu0_rate = cpufreq_quick_get(cpu);
 		fast_rate = cpu0_rate;
@@ -103,7 +103,7 @@ static void __cpuinit asmp_work_fn(struct work_struct *work) {
 					fast_rate = rate;
 			}
 		}
-		put_online_cpus();
+
 		if (cpu0_rate < slow_rate)
 			slow_rate = cpu0_rate;
 
@@ -130,24 +130,25 @@ static void __cpuinit asmp_work_fn(struct work_struct *work) {
 	#endif
 			}
 		} /* else do nothing */
+     //put_online_cpus();
 
 		queue_delayed_work(asmp_workq, &asmp_work, delay_jif);
 	}
 }
 
 static void asmp_power_suspend(struct power_suspend *h) {
-	unsigned int cpu;
+	//unsigned int cpu;
 
 	if (enabled) {
 	/* unplug online cpu cores */
 		user_max_cpus = asmp_param.max_cpus;
 		asmp_param.max_cpus = asmp_param.min_cpus;
 		
-		for_each_present_cpu(cpu)
-		{
-			if ((cpu >= (asmp_param.min_cpus)) && cpu_online(cpu))
-				cpu_down(cpu);
-		}
+		//for_each_present_cpu(cpu)
+		//{
+		//	if ((cpu >= (asmp_param.min_cpus)) && cpu_online(cpu))
+		//		cpu_down(cpu);
+		//}
 		
 		/* suspend main work thread */
 		//cancel_delayed_work_sync(&asmp_work);
@@ -164,13 +165,15 @@ static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 	
 		asmp_param.max_cpus = user_max_cpus;
 	
-		for_each_present_cpu(cpu) {
+		//get_online_cpus();
+     for_each_present_cpu(cpu) {
 			if (num_online_cpus() >= asmp_param.max_cpus)
 				break;
 			if (!cpu_online(cpu))
 				cpu_up(cpu);
 		}
 
+    //put_online_cpus();
 		pr_info(ASMP_TAG"resumed\n");
 	}
 }
@@ -191,12 +194,14 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 		pr_info(ASMP_TAG"enabled\n");
 	} else {
 		cancel_delayed_work_sync(&asmp_work);
+     //get_online_cpus();
 		for_each_present_cpu(cpu) {
 			if (num_online_cpus() >= nr_cpu_ids)
 				break;
 			if (!cpu_online(cpu))
 				cpu_up(cpu);
 		}
+     //put_online_cpus();
 		pr_info(ASMP_TAG"disabled\n");
 	}
 	return ret;

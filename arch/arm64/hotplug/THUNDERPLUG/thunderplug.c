@@ -94,18 +94,6 @@ static struct delayed_work tplug_boost;
 
 static unsigned int last_load[8] = { 0 };
 
-struct cpu_load_data {
-	u64 prev_cpu_idle;
-	u64 prev_cpu_wall;
-	unsigned int avg_load_maxfreq;
-	unsigned int cur_load_maxfreq;
-	unsigned int samples;
-	unsigned int window_size;
-	cpumask_var_t related_cpus;
-};
-
-//static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
-
 
 /* Two Endurance Levels for Octa Cores,
  * Two for Quad Cores and
@@ -114,6 +102,7 @@ struct cpu_load_data {
 static void offline_cpus(void)
 {
 	unsigned int cpu;
+   //get_online_cpus();
 	switch(endurance_level) {
 		case 1:
 			if(suspend_cpu_num > NR_CPUS / 2 )
@@ -130,12 +119,14 @@ static void offline_cpus(void)
 		if (cpu_online(cpu))
 			cpu_down(cpu);
 	}
+   //put_online_cpus();
 	pr_info("%s: %d cpus were offlined\n", THUNDERPLUG, (NR_CPUS - suspend_cpu_num));
 }
 
 static void __cpuinit cpus_online_all(void)
 {
 	unsigned int cpu;
+   //get_online_cpus();
 	switch(endurance_level) {
 	case 1:
 		if(resume_cpu_num > (NR_CPUS / 2) - 1 || resume_cpu_num == 1)
@@ -159,6 +150,7 @@ static void __cpuinit cpus_online_all(void)
 		if (cpu_is_offline(cpu))
 			cpu_up(cpu);
 	}
+   //put_online_cpus();
 
 	pr_info("%s: all cpus were onlined\n", THUNDERPLUG);
 }
@@ -173,6 +165,7 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 #else
 	if(tplug_hp_enabled == 1) {
 #endif
+      //get_online_cpus();
 	   for(cpu = 1; cpu < NR_CPUS; cpu++) {
 			if(cpu_is_offline(cpu))
 				cpu_up(cpu);
@@ -183,6 +176,7 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 			policy.min = policy.max;
 			cpufreq_update_policy(cpu);
 		}
+     //put_online_cpus();
 		if(stop_boost == 0)
 			queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
 				msecs_to_jiffies(10));
@@ -450,6 +444,7 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 	}
 	else
 	{
+     //get_online_cpus();
 		for(i = 0 ; i < core_limit; i++)
 		{
 			if(cpu_online(i))
@@ -483,6 +478,7 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 				}
 			}
 		}
+     //put_online_cpus();
 	}
 #ifdef CONFIG_USES_MALI_MP2_GPU
 	if(gpu_hotplug_enabled) {
