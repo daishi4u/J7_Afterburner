@@ -196,7 +196,6 @@ viewbox(
 	  "Features",         "",                                                                                  2,  #-- Group 1. key = "item.1.x"
 	    "Root",           "Install rooted kernel (WARNING!! DESELECTING THIS OPTION WILL UNROOT YOUR DEVICE!!)",      1,      #-- item.1.1 = Selected by default
 		"Permissive",            "Install an init file to make the kernel permissive",                          0,   #-- item.1.2 = deSelected by default
-     "Insecure adb",            "Root access to adb shell without confirming the PC on the phone",                          0,
      "init.d support",            "Usefull for running custom scripts upon boot (will install busybox as well) ",                          0,
      "busybox",            "Install busybox in the kernel at /sbin/busybox",                          0,
 	 "J700H",            "ONLY SELECT THIS OPTION IF YOUR PHONE MODEL IS A J700H!!!",                          0
