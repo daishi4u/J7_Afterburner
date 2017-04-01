@@ -100,11 +100,9 @@ static void __ref msm_zd_online_all_cpus(struct work_struct *work)
 {
 	int cpu;
 
- //get_online_cpus();
 	for_each_cpu_not(cpu, cpu_online_mask) {
 		cpu_up(cpu);
 	}
-   //put_online_cpus();
 }
 
 /*
