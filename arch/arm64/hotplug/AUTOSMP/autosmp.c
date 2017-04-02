@@ -72,102 +72,96 @@ static void __cpuinit asmp_work_fn(struct work_struct *work) {
 	unsigned int max_rate, up_rate, down_rate;
 	int nr_cpu_online;
 
-	if (enabled) {
-		cycle++;
+	cycle++;
 
-		if (asmp_param.delay != delay0) {
-			delay0 = asmp_param.delay;
-			delay_jif = msecs_to_jiffies(delay0);
-		}
-
-		/* get maximum possible freq for cpu0 and
-		   calculate up/down limits */
-		max_rate  = cpufreq_quick_get_max(cpu);
-		up_rate   = asmp_param.cpufreq_up*max_rate/100;
-		down_rate = asmp_param.cpufreq_down*max_rate/100;
-
-		/* find current max and min cpu freq to estimate load */
-		get_online_cpus();
-		nr_cpu_online = num_online_cpus();
-		cpu0_rate = cpufreq_quick_get(cpu);
-		fast_rate = cpu0_rate;
-		for_each_online_cpu(cpu)
-		{
-			if (cpu) {
-				rate = cpufreq_quick_get(cpu);
-				if (rate <= slow_rate) {
-					slow_cpu = cpu;
-					slow_rate = rate;
-				} else if (rate > fast_rate)
-					fast_rate = rate;
-			}
-		}
-		put_online_cpus();
-		if (cpu0_rate < slow_rate)
-			slow_rate = cpu0_rate;
-
-		/* hotplug one core if all online cores are over up_rate limit */
-		if (slow_rate > up_rate) {
-			if ((nr_cpu_online < asmp_param.max_cpus) &&
-				(cycle >= asmp_param.cycle_up)) {
-				cpu = cpumask_next_zero(0, cpu_online_mask);
-				cpu_up(cpu);
-				cycle = 0;
-	#if DEBUG
-				pr_info(ASMP_TAG"CPU[%d] on\n", cpu);
-	#endif
-			}
-		/* unplug slowest core if all online cores are under down_rate limit */
-		} else if (slow_cpu && (fast_rate < down_rate)) {
-			if ((nr_cpu_online > asmp_param.min_cpus) &&
-				(cycle >= asmp_param.cycle_down)) {
-				cpu_down(slow_cpu);
-				cycle = 0;
-	#if DEBUG
-				pr_info(ASMP_TAG"CPU[%d] off\n", slow_cpu);
-				per_cpu(asmp_cpudata, cpu).times_hotplugged += 1;
-	#endif
-			}
-		} /* else do nothing */
-
-		queue_delayed_work(asmp_workq, &asmp_work, delay_jif);
+	if (asmp_param.delay != delay0) {
+		delay0 = asmp_param.delay;
+		delay_jif = msecs_to_jiffies(delay0);
 	}
+
+	/* get maximum possible freq for cpu0 and
+	   calculate up/down limits */
+	max_rate  = cpufreq_quick_get_max(cpu);
+	up_rate   = asmp_param.cpufreq_up*max_rate/100;
+	down_rate = asmp_param.cpufreq_down*max_rate/100;
+
+	/* find current max and min cpu freq to estimate load */
+	get_online_cpus();
+	nr_cpu_online = num_online_cpus();
+	cpu0_rate = cpufreq_quick_get(cpu);
+	fast_rate = cpu0_rate;
+	for_each_online_cpu(cpu)
+	{
+		if (cpu) {
+			rate = cpufreq_quick_get(cpu);
+			if (rate <= slow_rate) {
+				slow_cpu = cpu;
+				slow_rate = rate;
+			} else if (rate > fast_rate)
+				fast_rate = rate;
+		}
+	}
+	put_online_cpus();
+	if (cpu0_rate < slow_rate)
+		slow_rate = cpu0_rate;
+
+	/* hotplug one core if all online cores are over up_rate limit */
+	if (slow_rate > up_rate) {
+		if ((nr_cpu_online < asmp_param.max_cpus) &&
+			(cycle >= asmp_param.cycle_up)) {
+			cpu = cpumask_next_zero(0, cpu_online_mask);
+			cpu_up(cpu);
+			cycle = 0;
+#if DEBUG
+			pr_info(ASMP_TAG"CPU[%d] on\n", cpu);
+#endif
+		}
+	/* unplug slowest core if all online cores are under down_rate limit */
+	} else if (slow_cpu && (fast_rate < down_rate)) {
+		if ((nr_cpu_online > asmp_param.min_cpus) &&
+			(cycle >= asmp_param.cycle_down)) {
+			cpu_down(slow_cpu);
+			cycle = 0;
+#if DEBUG
+			pr_info(ASMP_TAG"CPU[%d] off\n", slow_cpu);
+			per_cpu(asmp_cpudata, cpu).times_hotplugged += 1;
+#endif
+		}
+	} /* else do nothing */
+
+	queue_delayed_work(asmp_workq, &asmp_work, delay_jif);
 }
 
 static void asmp_power_suspend(struct power_suspend *h) {
 	unsigned int cpu;
 
-	if (enabled) {
 	/* unplug online cpu cores */
 		
-		for_each_present_cpu(cpu)
-		{
-			if ((cpu >= (asmp_param.min_cpus)) && cpu_online(cpu))
-				cpu_down(cpu);
-		}
-		
-		/* suspend main work thread */
-		//cancel_delayed_work_sync(&asmp_work);
-
-		pr_info(ASMP_TAG"suspended\n");
+	for_each_present_cpu(cpu)
+	{
+		if ((cpu >= (asmp_param.min_cpus)) && cpu_online(cpu))
+			cpu_down(cpu);
 	}
+	
+	/* suspend main work thread */
+	//cancel_delayed_work_sync(&asmp_work);
+
+	pr_info(ASMP_TAG"suspended\n");
 }
 
 static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 	unsigned int cpu;
 
-	if (enabled) {
 	/* hotplug offline cpu cores */
-	
-		for_each_present_cpu(cpu) {
-			if (num_online_cpus() >= asmp_param.max_cpus)
-				break;
-			if (!cpu_online(cpu))
-				cpu_up(cpu);
-		}
 
-		pr_info(ASMP_TAG"resumed\n");
+	for_each_present_cpu(cpu) {
+		if (num_online_cpus() >= asmp_param.max_cpus)
+			break;
+		if (!cpu_online(cpu))
+			cpu_up(cpu);
 	}
+
+	pr_info(ASMP_TAG"resumed\n");
 }
 
 static struct power_suspend __refdata asmp_power_suspend_handler = {
@@ -183,9 +177,11 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 	if (enabled) {
 		queue_delayed_work(asmp_workq, &asmp_work,
 				msecs_to_jiffies(asmp_param.delay));
+		register_power_suspend(&asmp_power_suspend_handler);
 		pr_info(ASMP_TAG"enabled\n");
 	} else {
 		cancel_delayed_work_sync(&asmp_work);
+		unregister_power_suspend(&asmp_power_suspend_handler);
 		for_each_present_cpu(cpu) {
 			if (num_online_cpus() >= nr_cpu_ids)
 				break;
@@ -308,10 +304,11 @@ static int __init asmp_init(void) {
 		return -ENOMEM;
 	INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
 	if (enabled)
+	{
 		queue_delayed_work(asmp_workq, &asmp_work,
 				   msecs_to_jiffies(ASMP_STARTDELAY));
-
-	register_power_suspend(&asmp_power_suspend_handler);
+		register_power_suspend(&asmp_power_suspend_handler);
+	}
 
 	asmp_kobject = kobject_create_and_add("autosmp", kernel_kobj);
 	if (asmp_kobject) {

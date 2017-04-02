@@ -129,25 +129,19 @@ static void __ref tplug_boost_work_fn(struct work_struct *work)
 	struct cpufreq_policy policy;
 	int cpu, ret;
 
-#ifdef CONFIG_SCHED_HMP
-	if(tplug_hp_style == 1) {
-#else
-	if(tplug_hp_enabled == 1) {
-#endif
-	   for(cpu = 1; cpu < NR_CPUS; cpu++) {
-			if(cpu_is_offline(cpu))
-				cpu_up(cpu);
-			ret = cpufreq_get_policy(&policy, cpu);
-			if (ret)
-				continue;
-			old_policy[cpu] = policy;
-			policy.min = policy.max;
-			cpufreq_update_policy(cpu);
-		}
-		if(stop_boost == 0)
-			queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
-				msecs_to_jiffies(10));
+   for(cpu = 1; cpu < NR_CPUS; cpu++) {
+		if(cpu_is_offline(cpu))
+			cpu_up(cpu);
+		ret = cpufreq_get_policy(&policy, cpu);
+		if (ret)
+			continue;
+		old_policy[cpu] = policy;
+		policy.min = policy.max;
+		cpufreq_update_policy(cpu);
 	}
+	if(stop_boost == 0)
+		queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
+			msecs_to_jiffies(10));
 }
 
 static void tplug_input_event(struct input_handle *handle, unsigned int type,
@@ -468,29 +462,18 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 }
 
 static void tplug_es_suspend_work(struct power_suspend *p) {
-	#ifdef CONFIG_SCHED_HMP
-	if(tplug_hp_style==1) {
-#else
-	if(tplug_hp_enabled) {
-#endif
-		isSuspended = true;
-		offline_cpus();		// we're only going to put this here because if the cpu gets overwhelmed during suspend and no more cores can come online then we get random reboots
-		
-		pr_info("thunderplug : suspend called\n");
-	}
+
+	isSuspended = true;
+	offline_cpus();		// we're only going to put this here because if the cpu gets overwhelmed during suspend and no more cores can come online then we get random reboots
+	
+	pr_info("thunderplug : suspend called\n");
 }
 
 static void __cpuinit tplug_es_resume_work(struct power_suspend *p) {
-#ifdef CONFIG_SCHED_HMP
-	if(tplug_hp_style==1) {
-#else
-	if(tplug_hp_enabled) {
-#endif
-		isSuspended = false;
-		cpus_online_all();
+	isSuspended = false;
+	cpus_online_all();
 
-	    pr_info("%s: resume\n", THUNDERPLUG);
-   }
+	pr_info("%s: resume\n", THUNDERPLUG);
 }
 
 static struct power_suspend __refdata tplug_power_suspend_handler = 
@@ -600,10 +583,16 @@ static ssize_t __ref thunderplug_hp_enabled_store(struct kobject *kobj, struct k
 	}
 
 	if(tplug_hp_enabled == 1 && tplug_hp_enabled != last_val)
+	{
 		queue_delayed_work_on(0, tplug_wq, &tplug_work,
 							msecs_to_jiffies(sampling_time));
+		register_power_suspend(&tplug_power_suspend_handler);				
+	}
 	else if(tplug_hp_enabled == 0 && tplug_hp_enabled != last_val)
+	{
 		cancel_delayed_work_sync(&tplug_work);
+		unregister_power_suspend(&tplug_power_suspend_handler);
+	}
 
 	return count;
 }
@@ -722,7 +711,6 @@ static int __init thunderplug_init(void)
         int ret = 0;
         int sysfs_result;
         printk(KERN_DEBUG "[%s]\n",__func__);
-		register_power_suspend(&tplug_power_suspend_handler);
 
         thunderplug_kobj = kobject_create_and_add("thunderplug", kernel_kobj);
 
@@ -756,8 +744,11 @@ static int __init thunderplug_init(void)
 		INIT_DELAYED_WORK(&tplug_boost, tplug_boost_work_fn);
 		
 		if (tplug_hp_enabled)
+		{
 			queue_delayed_work_on(0, tplug_wq, &tplug_work,
 		                      msecs_to_jiffies(10));
+			register_power_suspend(&tplug_power_suspend_handler);
+		}
 
         pr_info("%s: init\n", THUNDERPLUG);
 
