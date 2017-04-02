@@ -25,7 +25,7 @@
 #include <linux/powersuspend.h>
 #include "thunderplug.h"
 
-#define DEBUG                        false
+#define DEBUG                        0
 
 #define THUNDERPLUG                  "thunderplug"
 
@@ -293,7 +293,7 @@ static ssize_t __ref thunderplug_endurance_store(struct kobject *kobj, struct ko
 							suspend_cpu_num = NR_CPUS / 4;
 						if( NR_CPUS >= 4 && resume_cpu_num > ((NR_CPUS / 4) - 1))
 							resume_cpu_num = ((NR_CPUS / 4) - 1);
-						core_limit = NR_CPUS / 4
+						core_limit = NR_CPUS / 4;
 					break;
 					default:
 						suspend_cpu_num = NR_CPUS / 4; //will only work with quad or Octa core cups, but a default should be reset here
