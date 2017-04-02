@@ -43,7 +43,6 @@ static DEFINE_PER_CPU(struct asmp_cpudata_t, asmp_cpudata);
 
 static struct asmp_param_struct {
 	unsigned int delay;
-	bool scroff_single_core;
 	unsigned int max_cpus;
 	unsigned int min_cpus;
 	unsigned int cpufreq_up;
@@ -52,7 +51,6 @@ static struct asmp_param_struct {
 	unsigned int cycle_down;
 } asmp_param = {
 	.delay = 100,
-	.scroff_single_core = true,
 	.max_cpus = CONFIG_NR_CPUS,
 	.min_cpus = 2,
 // one makes the j7 lag
@@ -154,13 +152,14 @@ static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 
 	/* hotplug offline cpu cores */
 
-	for_each_present_cpu(cpu) {
-		if (num_online_cpus() >= asmp_param.max_cpus)
-			break;
-		if (!cpu_online(cpu))
-			cpu_up(cpu);
-	}
+  if (num_online_cpus() < asmp_param.max_cpus)
+   {
+	   for_each_present_cpu(cpu) {
+		   if (!cpu_online(cpu))
+			   cpu_up(cpu);
+	   }
 
+  }
 	pr_info(ASMP_TAG"resumed\n");
 }
 
@@ -223,7 +222,6 @@ static ssize_t show_##file_name						\
 	return sprintf(buf, "%u\n", asmp_param.object);			\
 }
 show_one(delay, delay);
-show_one(scroff_single_core, scroff_single_core);
 show_one(min_cpus, min_cpus);
 show_one(max_cpus, max_cpus);
 show_one(cpufreq_up,cpufreq_up);
@@ -245,7 +243,6 @@ static ssize_t store_##file_name					\
 }									\
 define_one_global_rw(file_name);
 store_one(delay, delay);
-store_one(scroff_single_core, scroff_single_core);
 store_one(min_cpus, min_cpus);
 store_one(max_cpus, max_cpus);
 store_one(cpufreq_up, cpufreq_up);
@@ -255,7 +252,6 @@ store_one(cycle_down, cycle_down);
 
 static struct attribute *asmp_attributes[] = {
 	&delay.attr,
-	&scroff_single_core.attr,
 	&min_cpus.attr,
 	&max_cpus.attr,
 	&cpufreq_up.attr,
