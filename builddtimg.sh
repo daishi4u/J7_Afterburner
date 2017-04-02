@@ -46,13 +46,21 @@ rm -rf $MYOUT/j7e3g/
 rm $MYOUT/Image.gz-dtb
 rm $MYOUT/boot.img-ramdisk.gz
 
-# make the flashable zip
+# make the flashable zip new ramdisk
 cd $ABDIR/zipsrc
-zip -r afterburner.zip kernel/ bootimgtools/ add-ons/ META-INF/ devices/
-mv afterburner.zip $ABDIR/out/
+cp ramdisk/ramdisk-new.zip kernel/ramdisk.zip
+zip -r afterburner-newRD.zip kernel/ bootimgtools/ add-ons/ META-INF/ devices/
+# make the flashable zip old ramdisk
+rm kernel/ramdisk.zip
+cp ramdisk/ramdisk-old.zip kernel/ramdisk.zip
+zip -r afterburner-oldRD.zip kernel/ bootimgtools/ add-ons/ META-INF/ devices/
+mv afterburner-newRD.zip $ABDIR/out/
+mv afterburner-oldRD.zip $ABDIR/out/
 rm $ABDIR/zipsrc/devices/j7elte/dt.img
 rm $ABDIR/zipsrc/devices/j7e3g/dt.img
 rm $ABDIR/zipsrc/kernel/zImage
+rm kernel/ramdisk.zip
 
 # move to my personal out dir
-cp $ABDIR/out/afterburner.zip $KERNELDIR/../../dev/buildout/kernel/
+cp $ABDIR/out/afterburner-newRD.zip $KERNELDIR/../../dev/buildout/kernel/
+cp $ABDIR/out/afterburner-oldRD.zip $KERNELDIR/../../dev/buildout/kernel/

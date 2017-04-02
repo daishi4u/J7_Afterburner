@@ -170,25 +170,29 @@ static struct power_suspend __refdata asmp_power_suspend_handler = {
 };
 
 static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp) {
-	int ret;
+	int ret, last_val = enabled;
 	unsigned int cpu;
 
 	ret = param_set_bool(val, kp);
-	if (enabled) {
-		queue_delayed_work(asmp_workq, &asmp_work,
-				msecs_to_jiffies(asmp_param.delay));
-		register_power_suspend(&asmp_power_suspend_handler);
-		pr_info(ASMP_TAG"enabled\n");
-	} else {
-		cancel_delayed_work_sync(&asmp_work);
-		unregister_power_suspend(&asmp_power_suspend_handler);
-		for_each_present_cpu(cpu) {
-			if (num_online_cpus() >= nr_cpu_ids)
-				break;
-			if (!cpu_online(cpu))
-				cpu_up(cpu);
+	
+	if(enabled != last_val)
+	{
+		if (enabled) {
+			queue_delayed_work(asmp_workq, &asmp_work,
+					msecs_to_jiffies(asmp_param.delay));
+			register_power_suspend(&asmp_power_suspend_handler);
+			pr_info(ASMP_TAG"enabled\n");
+		} else {
+			cancel_delayed_work_sync(&asmp_work);
+			unregister_power_suspend(&asmp_power_suspend_handler);
+			for_each_present_cpu(cpu) {
+				if (num_online_cpus() >= nr_cpu_ids)
+					break;
+				if (!cpu_online(cpu))
+					cpu_up(cpu);
+			}
+			pr_info(ASMP_TAG"disabled\n");
 		}
-		pr_info(ASMP_TAG"disabled\n");
 	}
 	return ret;
 }

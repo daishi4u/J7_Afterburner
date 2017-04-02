@@ -260,26 +260,33 @@ static struct platform_device zd_device = {
 
 static int enable(void)
 {
-	int ret = platform_driver_register(&zd_driver);
-	if (ret)
-		pr_err("[%s]: platform_driver_register failed: %d\n", ZEN_DECISION, ret);
-	else
-		pr_info("[%s]: platform_driver_register succeeded\n", ZEN_DECISION);
+	int ret = 0;
+	if(!enabled)
+	{
+		ret = platform_driver_register(&zd_driver);
+		if (ret)
+			pr_err("[%s]: platform_driver_register failed: %d\n", ZEN_DECISION, ret);
+		else
+			pr_info("[%s]: platform_driver_register succeeded\n", ZEN_DECISION);
 
 
-	ret = platform_device_register(&zd_device);
-	if (ret)
-		pr_err("[%s]: platform_device_register failed: %d\n", ZEN_DECISION, ret);
-	else
-		pr_info("[%s]: platform_device_register succeeded\n", ZEN_DECISION);
+		ret = platform_device_register(&zd_device);
+		if (ret)
+			pr_err("[%s]: platform_device_register failed: %d\n", ZEN_DECISION, ret);
+		else
+			pr_info("[%s]: platform_device_register succeeded\n", ZEN_DECISION);
+	}
 	
 	return ret;
 }
 
 static void disable(void)
 {
-	platform_driver_unregister(&zd_driver);
-	platform_device_unregister(&zd_device);
+	if(enabled)
+	{
+		platform_driver_unregister(&zd_driver);
+		platform_device_unregister(&zd_device);
+	}
 }
 
 static ssize_t enable_show(struct kobject *kobj,
@@ -302,13 +309,13 @@ static ssize_t enable_store(struct kobject *kobj,
 	{
 		if (new_val > 0)
 		{
-			enabled = 1;
 			enable();
+			enabled = 1;
 		}
 		else
 		{
-			enabled = 0;
 			disable();
+			enabled = 0;
 		}
 	}
 	return size;

@@ -582,16 +582,19 @@ static ssize_t __ref thunderplug_hp_enabled_store(struct kobject *kobj, struct k
 		break;
 	}
 
-	if(tplug_hp_enabled == 1 && tplug_hp_enabled != last_val)
+	if(tplug_hp_enabled != last_val)
 	{
-		queue_delayed_work_on(0, tplug_wq, &tplug_work,
-							msecs_to_jiffies(sampling_time));
-		register_power_suspend(&tplug_power_suspend_handler);				
-	}
-	else if(tplug_hp_enabled == 0 && tplug_hp_enabled != last_val)
-	{
-		cancel_delayed_work_sync(&tplug_work);
-		unregister_power_suspend(&tplug_power_suspend_handler);
+		if(tplug_hp_enabled == 1)
+		{
+			queue_delayed_work_on(0, tplug_wq, &tplug_work,
+								msecs_to_jiffies(sampling_time));
+			register_power_suspend(&tplug_power_suspend_handler);				
+		}
+		else if(tplug_hp_enabled == 0)
+		{
+			cancel_delayed_work_sync(&tplug_work);
+			unregister_power_suspend(&tplug_power_suspend_handler);
+		}
 	}
 
 	return count;
