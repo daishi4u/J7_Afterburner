@@ -149,29 +149,6 @@ static int fb_notifier_callback(struct notifier_block *nb,
 }
 
 /* Sysfs Start */
-static ssize_t enable_show(struct kobject *kobj,
-	struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", enabled);
-}
-
-static ssize_t enable_store(struct kobject *kobj,
-	struct kobj_attribute *attr, const char *buf, size_t size)
-{
-	int ret;
-	unsigned long new_val;
-
-	ret = kstrtoul(buf, 0, &new_val);
-	if (ret < 0)
-		return ret;
-
-	if (new_val > 0)
-		enabled = 1;
-	else
-		enabled = 0;
-
-	return size;
-}
 
 static ssize_t wake_delay_show(struct kobject *kobj,
 	struct kobj_attribute *attr, char *buf)
@@ -218,47 +195,11 @@ static ssize_t bat_threshold_ignore_store(struct kobject *kobj,
 	return size;
 }
 
-static struct kobj_attribute kobj_enabled =
-	__ATTR(enabled, 0644, enable_show,
-		enable_store);
-
-static struct kobj_attribute kobj_wake_wait =
-	__ATTR(wake_wait_time, 0644, wake_delay_show,
-		wake_delay_store);
-
-static struct kobj_attribute kobj_bat_threshold_ignore =
-	__ATTR(bat_threshold_ignore, 0644, bat_threshold_ignore_show,
-		bat_threshold_ignore_store);
-
-static struct attribute *zd_attrs[] = {
-	&kobj_enabled.attr,
-	&kobj_wake_wait.attr,
-	&kobj_bat_threshold_ignore.attr,
-	NULL,
-};
-
-static struct attribute_group zd_option_group = {
-	.attrs = zd_attrs,
-};
-
 /* Sysfs End */
 
 static int zd_probe(struct platform_device *pdev)
 {
 	int ret;
-
-	/* Setup sysfs */
-	zendecision_kobj = kobject_create_and_add("zen_decision", kernel_kobj);
-	if (zendecision_kobj == NULL) {
-		pr_err("[%s]: subsystem register failed. \n", ZEN_DECISION);
-		return -ENOMEM;
-	}
-
-	ret = sysfs_create_group(zendecision_kobj, &zd_option_group);
-	if (ret) {
-		pr_info("[%s]: sysfs interface failed to initialize\n", ZEN_DECISION);
-		return -EINVAL;
-	}
 
 	/* Setup Workqueues */
 	zen_wake_wq = alloc_workqueue("zen_wake_wq", WQ_FREEZABLE | WQ_UNBOUND, 1);
@@ -317,7 +258,7 @@ static struct platform_device zd_device = {
 	.id = -1
 };
 
-static int __init zd_init(void)
+static int enable(void)
 {
 	int ret = platform_driver_register(&zd_driver);
 	if (ret)
@@ -331,14 +272,99 @@ static int __init zd_init(void)
 		pr_err("[%s]: platform_device_register failed: %d\n", ZEN_DECISION, ret);
 	else
 		pr_info("[%s]: platform_device_register succeeded\n", ZEN_DECISION);
+	
+	return ret;
+}
+
+static void disable(void)
+{
+	platform_driver_unregister(&zd_driver);
+	platform_device_unregister(&zd_device);
+}
+
+static ssize_t enable_show(struct kobject *kobj,
+	struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", enabled);
+}
+
+static ssize_t enable_store(struct kobject *kobj,
+	struct kobj_attribute *attr, const char *buf, size_t size)
+{
+	int ret;
+	unsigned long new_val;
+
+	ret = kstrtoul(buf, 0, &new_val);
+	if (ret < 0)
+		return ret;
+
+	if(new_val != enabled)
+	{
+		if (new_val > 0)
+		{
+			enabled = 1;
+			enable();
+		}
+		else
+		{
+			enabled = 0;
+			disable();
+		}
+	}
+	return size;
+}
+
+static struct kobj_attribute kobj_enabled =
+	__ATTR(enabled, 0644, enable_show,
+		enable_store);
+
+static struct kobj_attribute kobj_wake_wait =
+	__ATTR(wake_wait_time, 0644, wake_delay_show,
+		wake_delay_store);
+
+static struct kobj_attribute kobj_bat_threshold_ignore =
+	__ATTR(bat_threshold_ignore, 0644, bat_threshold_ignore_show,
+		bat_threshold_ignore_store);
+
+static struct attribute *zd_attrs[] = {
+	&kobj_enabled.attr,
+	&kobj_wake_wait.attr,
+	&kobj_bat_threshold_ignore.attr,
+	NULL,
+};
+
+static struct attribute_group zd_option_group = {
+	.attrs = zd_attrs,
+};
+
+static int __init zd_init(void)
+{
+	int ret = 0;
+	
+	if(enabled)
+	{
+		ret = enable();
+	}
+	
+	/* Setup sysfs */
+	zendecision_kobj = kobject_create_and_add("zen_decision", kernel_kobj);
+	if (zendecision_kobj == NULL) {
+		pr_err("[%s]: subsystem register failed. \n", ZEN_DECISION);
+		return -ENOMEM;
+	}
+
+	ret = sysfs_create_group(zendecision_kobj, &zd_option_group);
+	if (ret) {
+		pr_info("[%s]: sysfs interface failed to initialize\n", ZEN_DECISION);
+		return -EINVAL;
+	}
 
 	return ret;
 }
 
 static void __exit zd_exit(void)
 {
-	platform_driver_unregister(&zd_driver);
-	platform_device_unregister(&zd_device);
+	disable();
 }
 
 late_initcall(zd_init);
