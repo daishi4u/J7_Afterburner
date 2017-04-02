@@ -94,18 +94,6 @@ static struct delayed_work tplug_boost;
 
 static unsigned int last_load[8] = { 0 };
 
-struct cpu_load_data {
-	u64 prev_cpu_idle;
-	u64 prev_cpu_wall;
-	unsigned int avg_load_maxfreq;
-	unsigned int cur_load_maxfreq;
-	unsigned int samples;
-	unsigned int window_size;
-	cpumask_var_t related_cpus;
-};
-
-//static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
-
 
 /* Two Endurance Levels for Octa Cores,
  * Two for Quad Cores and
@@ -124,6 +112,7 @@ static void offline_cpus(void)
 				suspend_cpu_num = NR_CPUS / 4;
 		break;
 		default:
+          suspend_cpu_num = NR_CPUS / 4; //will only work with quad or Octa core cups, but a default should be reset here
 		break;
 	}
 	for(cpu = NR_CPUS - 1; cpu > (suspend_cpu_num - 1); cpu--) {
@@ -461,26 +450,22 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 			last_load[i] = load[i];
 		}
 
-		for(i = 0 ; i < core_limit; i++)
+		for(i = 0 ; i < core_limit - 1; i++)
 		{
 			if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
 			{
 				if(DEBUG)
 					pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
-				if(!((i+1) > 7)) {
-					last_time[i+1] = ktime_to_ms(ktime_get());
-					cpu_up(i+1);
-				}
+				last_time[i+1] = ktime_to_ms(ktime_get());
+				cpu_up(i+1);
 			}
 			else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
 			{
 				if(DEBUG)
 					pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
-				if(!(i+1)==0) {
-					now[i+1] = ktime_to_ms(ktime_get());
-					if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
-						cpu_down(i+1);
-				}
+				now[i+1] = ktime_to_ms(ktime_get());
+				if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
+					cpu_down(i+1);
 			}
 		}
 	}
