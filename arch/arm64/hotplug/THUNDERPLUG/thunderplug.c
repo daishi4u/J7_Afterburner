@@ -25,7 +25,7 @@
 #include <linux/powersuspend.h>
 #include "thunderplug.h"
 
-#define DEBUG                        0
+#define DEBUG                        false
 
 #define THUNDERPLUG                  "thunderplug"
 
@@ -94,7 +94,6 @@ static struct delayed_work tplug_boost;
 
 static unsigned int last_load[8] = { 0 };
 
-
 /* Two Endurance Levels for Octa Cores,
  * Two for Quad Cores and
  * One for Dual
@@ -102,19 +101,6 @@ static unsigned int last_load[8] = { 0 };
 static void offline_cpus(void)
 {
 	unsigned int cpu;
-	switch(endurance_level) {
-		case 1:
-			if(suspend_cpu_num > NR_CPUS / 2 )
-				suspend_cpu_num = NR_CPUS / 2;
-		break;
-		case 2:
-			if( NR_CPUS >=4 && suspend_cpu_num > NR_CPUS / 4)
-				suspend_cpu_num = NR_CPUS / 4;
-		break;
-		default:
-          suspend_cpu_num = NR_CPUS / 4; //will only work with quad or Octa core cups, but a default should be reset here
-		break;
-	}
 	for(cpu = NR_CPUS - 1; cpu > (suspend_cpu_num - 1); cpu--) {
 		if (cpu_online(cpu))
 			cpu_down(cpu);
@@ -125,25 +111,11 @@ static void offline_cpus(void)
 static void __cpuinit cpus_online_all(void)
 {
 	unsigned int cpu;
-	switch(endurance_level) {
-	case 1:
-		if(resume_cpu_num > (NR_CPUS / 2) - 1 || resume_cpu_num == 1)
-			resume_cpu_num = ((NR_CPUS / 2) - 1);
-	break;
-	case 2:
-		if( NR_CPUS >= 4 && resume_cpu_num > ((NR_CPUS / 4) - 1))
-			resume_cpu_num = ((NR_CPUS / 4) - 1);
-	break;
-	case 0:
-			resume_cpu_num = (NR_CPUS - 1);
-	break;
-	default:
-	break;
-	}
 
-	if(DEBUG)
-		   pr_info("%s: resume_cpu_num = %d\n",THUNDERPLUG, resume_cpu_num);
-
+#if DEBUG
+	pr_info("%s: resume_cpu_num = %d\n",THUNDERPLUG, resume_cpu_num);
+#endif
+	
 	for (cpu = 1; cpu <= resume_cpu_num; cpu++) {
 		if (cpu_is_offline(cpu))
 			cpu_up(cpu);
@@ -187,17 +159,20 @@ static void tplug_input_event(struct input_handle *handle, unsigned int type,
 	if(tplug_hp_enabled == 1) {
 #endif
 		if (type == EV_KEY && code == BTN_TOUCH) {
-			if(DEBUG)
-				pr_info("%s : type = %d, code = %d, value = %d\n", THUNDERPLUG, type, code, value);
+#if DEBUG
+			pr_info("%s : type = %d, code = %d, value = %d\n", THUNDERPLUG, type, code, value);
+#endif
 			if(value == 0) {
 				stop_boost = 1;
-				if(DEBUG)
-					pr_info("%s: stopping boost\n", THUNDERPLUG);
+#if DEBUG
+				pr_info("%s: stopping boost\n", THUNDERPLUG);
+#endif			
 			}
 			else {
 				stop_boost = 0;
-				if(DEBUG)
-					pr_info("%s: starting boost\n", THUNDERPLUG);
+#if DEBUG
+				pr_info("%s: starting boost\n", THUNDERPLUG);
+#endif				
 			}
 		}
 #ifdef CONFIG_SCHED_HMP
@@ -208,8 +183,9 @@ static void tplug_input_event(struct input_handle *handle, unsigned int type,
 			&& touch_boost_enabled == 1)
 #endif
 		{
-			if(DEBUG)
-				pr_info("%s : touch boost\n", THUNDERPLUG);
+#if DEBUG
+			pr_info("%s : touch boost\n", THUNDERPLUG);
+#endif
 			queue_delayed_work_on(0, tplug_boost_wq, &tplug_boost,
 				msecs_to_jiffies(0));
 		}
@@ -303,6 +279,29 @@ static ssize_t __ref thunderplug_endurance_store(struct kobject *kobj, struct ko
 		case 2:
 			if(endurance_level!=val && !(endurance_level > 1 && NR_CPUS < 4)) {
 				endurance_level = val;
+				
+				switch(endurance_level) {
+					case 1:
+						if(suspend_cpu_num > NR_CPUS / 2 )
+							suspend_cpu_num = NR_CPUS / 2;
+						if(resume_cpu_num > (NR_CPUS / 2) - 1 || resume_cpu_num == 1)
+							resume_cpu_num = ((NR_CPUS / 2) - 1);
+						core_limit = NR_CPUS / 2;
+					break;
+					case 2:
+						if( NR_CPUS >=4 && suspend_cpu_num > NR_CPUS / 4)
+							suspend_cpu_num = NR_CPUS / 4;
+						if( NR_CPUS >= 4 && resume_cpu_num > ((NR_CPUS / 4) - 1))
+							resume_cpu_num = ((NR_CPUS / 4) - 1);
+						core_limit = NR_CPUS / 4
+					break;
+					default:
+						suspend_cpu_num = NR_CPUS / 4; //will only work with quad or Octa core cups, but a default should be reset here
+						resume_cpu_num = (NR_CPUS - 1);
+						core_limit = NR_CPUS;
+					break;
+				}
+				
 				offline_cpus();
 				cpus_online_all();
 			}
@@ -409,82 +408,57 @@ static void __cpuinit tplug_work_fn(struct work_struct *work)
 {
 	int i;
 	unsigned int load[8], avg_load[8];
-
-#ifdef CONFIG_SCHED_HMP
-    if(tplug_hp_style == 0)
-#else
-	if(tplug_hp_enabled == 0)
-#endif
-		return;
-
-	switch(endurance_level)
-	{
-	case 0:
-		core_limit = NR_CPUS;
-	break;
-	case 1:
-		core_limit = NR_CPUS / 2;
-	break;
-	case 2:
-		core_limit = NR_CPUS / 4;
-	break;
-	default:
-		core_limit = NR_CPUS;
-	break;
-	}
 	
-	if (isSuspended)
+	for(i = 0 ; i < core_limit; i++)
 	{
-		offline_cpus();
+		if(cpu_online(i))
+			load[i] = cpufreq_quick_get_util(i);
+		else
+			load[i] = 0;
+
+		avg_load[i] = ((int) load[i] + (int) last_load[i]) / 2;
+		last_load[i] = load[i];
 	}
-	else
+
+	for(i = 0 ; i < core_limit - 1; i++)
 	{
-		for(i = 0 ; i < core_limit; i++)
+		if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
 		{
-			if(cpu_online(i))
-				load[i] = cpufreq_quick_get_util(i);
-			else
-				load[i] = 0;
-
-			avg_load[i] = ((int) load[i] + (int) last_load[i]) / 2;
-			last_load[i] = load[i];
+#if DEBUG
+			pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
+#endif
+			last_time[i+1] = ktime_to_ms(ktime_get());
+			cpu_up(i+1);
 		}
-
-		for(i = 0 ; i < core_limit - 1; i++)
+		else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
 		{
-			if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
-			{
-				if(DEBUG)
-					pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
-				last_time[i+1] = ktime_to_ms(ktime_get());
-				cpu_up(i+1);
-			}
-			else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
-			{
-				if(DEBUG)
-					pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
-				now[i+1] = ktime_to_ms(ktime_get());
-				if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
-					cpu_down(i+1);
-			}
+#if DEBUG
+			pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
+#endif
+			now[i+1] = ktime_to_ms(ktime_get());
+			if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
+				cpu_down(i+1);
 		}
 	}
 #ifdef CONFIG_USES_MALI_MP2_GPU
 	if(gpu_hotplug_enabled) {
-		if(DEBUG)
-			pr_info("%s: current gpu load %d\n", THUNDERPLUG, get_gpu_load());
+#if DEBUG
+		pr_info("%s: current gpu load %d\n", THUNDERPLUG, get_gpu_load());
+#endif
 		if(get_gpu_load() > gpu_min_load_threshold) {
 			if(get_gpu_cores_enabled() < 2) {
 				enable_gpu_cores(2);
-				if(DEBUG)
-					pr_info("%s: gpu1 onlined\n", THUNDERPLUG);
+#if DEBUG
+				pr_info("%s: gpu1 onlined\n", THUNDERPLUG);
+#endif
 			}
 		}
 		else {
 			if(get_gpu_cores_enabled() > 1) {
 				enable_gpu_cores(1);
-				if(DEBUG)
-					pr_info("%s: gpu1 offlined\n", THUNDERPLUG);
+#if DEBUG
+				pr_info("%s: gpu1 offlined\n", THUNDERPLUG);
+#endif
 			}
 		}
 	}
@@ -500,6 +474,7 @@ static void tplug_es_suspend_work(struct power_suspend *p) {
 	if(tplug_hp_enabled) {
 #endif
 		isSuspended = true;
+		offline_cpus();		// we're only going to put this here because if the cpu gets overwhelmed during suspend and no more cores can come online then we get random reboots
 		
 		pr_info("thunderplug : suspend called\n");
 	}

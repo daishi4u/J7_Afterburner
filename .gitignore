@@ -81,6 +81,28 @@ lib/crc32table.h
 lib/gen_crc32table
 security/selinux/av_permissions.h
 security/selinux/flask.h
+arch/arm64/kernel/vdso/vdso-offsets.h
+arch/arm64/kernel/vdso/vdso.lds
+arch/arm64/kernel/vmlinux.lds
+kernel/hz.bc
+scripts/basic/fixdep
+scripts/dtc/dtc
+scripts/dtc/dtc-lexer.lex.c
+scripts/dtc/dtc-parser.tab.c
+scripts/dtc/dtc-parser.tab.h
+scripts/kallsyms
+scripts/kconfig/conf
+scripts/kconfig/zconf.hash.c
+scripts/kconfig/zconf.lex.c
+scripts/kconfig/zconf.tab.c
+scripts/mod/devicetable-offsets.h
+scripts/mod/elfconfig.h
+scripts/mod/mk_elfconfig
+scripts/mod/modpost
+scripts/selinux/genheaders/genheaders
+scripts/selinux/mdp/mdp
+scripts/sortextable
+usr/gen_init_cpio
 
 # stgit generated dirs
 patches-*

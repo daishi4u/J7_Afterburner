@@ -65,7 +65,6 @@ static struct asmp_param_struct {
 static unsigned int cycle = 0, delay0 = 0;
 static unsigned long delay_jif = 0;
 static int enabled __read_mostly = 0; //disable by default.
-static int user_max_cpus = NR_CPUS;
 
 static void __cpuinit asmp_work_fn(struct work_struct *work) {
 	unsigned int cpu = 0, slow_cpu = 0;
@@ -140,8 +139,6 @@ static void asmp_power_suspend(struct power_suspend *h) {
 
 	if (enabled) {
 	/* unplug online cpu cores */
-		user_max_cpus = asmp_param.max_cpus;
-		asmp_param.max_cpus = asmp_param.min_cpus;
 		
 		for_each_present_cpu(cpu)
 		{
@@ -161,8 +158,6 @@ static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 
 	if (enabled) {
 	/* hotplug offline cpu cores */
-	
-		asmp_param.max_cpus = user_max_cpus;
 	
 		for_each_present_cpu(cpu) {
 			if (num_online_cpus() >= asmp_param.max_cpus)

@@ -182,13 +182,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 
 	rq_avg = get_nr_run_avg();
 
-#if defined(CONFIG_POWERSUSPEND) || \
-	defined(CONFIG_HAS_EARLYSUSPEND)
-	if (hotplug_tuners_ins.suspended)
-		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit_sleep;
-	else
-#endif
-		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit;
+	upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit;
 
 	get_online_cpus();
 	online_cpus = num_online_cpus();
