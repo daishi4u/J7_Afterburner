@@ -92,8 +92,6 @@ static struct delayed_work tplug_work;
 static struct workqueue_struct *tplug_boost_wq;
 static struct delayed_work tplug_boost;
 
-static unsigned int last_load[8] = { 0 };
-
 /* Two Endurance Levels for Octa Cores,
  * Two for Quad Cores and
  * One for Dual
@@ -400,40 +398,28 @@ static void enable_gpu_cores(int num) {
 
 static void __cpuinit tplug_work_fn(struct work_struct *work)
 {
-	int i;
-	unsigned int load[8], avg_load[8];
+	int i, total_avg = 0, cpus_on = num_online_cpus();
 	
 	for(i = 0 ; i < core_limit; i++)
 	{
 		if(cpu_online(i))
-			load[i] = cpufreq_quick_get_util(i);
-		else
-			load[i] = 0;
-
-		avg_load[i] = ((int) load[i] + (int) last_load[i]) / 2;
-		last_load[i] = load[i];
+        total_avg += cpufreq_quick_get_util(i);
 	}
 
-	for(i = 0 ; i < core_limit - 1; i++)
+   total_avg = total_avg / cpus_on;
+
+   if(total_avg > load_threshold && cpus_on < core_limit)
+   {
+      last_time[cpus_on] = ktime_to_ms(ktime_get());
+      cpu_up(cpus_on);
+   }
+   else if(total_avg < load_threshold && cpus_on > suspend_cpu_num)
 	{
-		if(cpu_online(i) && avg_load[i] > load_threshold && cpu_is_offline(i+1))
-		{
-#if DEBUG
-			pr_info("%s : bringing back cpu%d\n", THUNDERPLUG,i);
-#endif
-			last_time[i+1] = ktime_to_ms(ktime_get());
-			cpu_up(i+1);
-		}
-		else if(cpu_online(i) && avg_load[i] < load_threshold && cpu_online(i+1))
-		{
-#if DEBUG
-			pr_info("%s : offlining cpu%d\n", THUNDERPLUG,i);
-#endif
-			now[i+1] = ktime_to_ms(ktime_get());
-			if((now[i+1] - last_time[i+1]) > MIN_CPU_UP_TIME)
-				cpu_down(i+1);
-		}
-	}
+			now[cpus_on - 1] = ktime_to_ms(ktime_get());
+			if((now[cpus_on - 1] - last_time[cpus_on - 1]) > MIN_CPU_UP_TIME)
+				cpu_down(cpus_on - 1);
+    }
+
 #ifdef CONFIG_USES_MALI_MP2_GPU
 	if(gpu_hotplug_enabled) {
 #if DEBUG
