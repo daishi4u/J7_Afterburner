@@ -398,8 +398,10 @@ static void enable_gpu_cores(int num) {
 
 static void __cpuinit tplug_work_fn(struct work_struct *work)
 {
-	int i, total_avg = 0, cpus_on = num_online_cpus();
+	int i, total_avg, cpus_on;
 	
+   total_avg = 0;
+   cpus_on = num_online_cpus();
 	for(i = 0 ; i < core_limit; i++)
 	{
 		if(cpu_online(i))
