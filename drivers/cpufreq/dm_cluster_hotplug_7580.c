@@ -7,6 +7,7 @@
 #include <linux/sched.h>
 #include <linux/suspend.h>
 #include <linux/pm_qos.h>
+#include <linux/stock_hotplug.h>
 
 static struct delayed_work exynos_hotplug;
 static struct delayed_work start_hotplug;
@@ -18,6 +19,7 @@ enum hstate {
 	H2,
 #ifndef CONFIG_EXYNOS7580_QUAD
 	H3,
+	H4,
 #endif
 	MAX_HSTATE,
 };
@@ -66,25 +68,30 @@ static struct hotplug_hstate hstate_set[] = {
 	},
 	[H1] = {
 		.name		= "H1",
-		.core_count	= NR_CPUS / 2,
+		.core_count	= (NR_CPUS * 3) / 4,
 		.state		= H1,
 	},
-#ifndef CONFIG_EXYNOS7580_QUAD
 	[H2] = {
 		.name		= "H2",
-		.core_count	= 2,
+		.core_count	= NR_CPUS / 2,
 		.state		= H2,
 	},
+#ifndef CONFIG_EXYNOS7580_QUAD
+	[H3] = {
+		.name		= "H3",
+		.core_count	= 2,
+		.state		= H3,
+	},
+	[H4] = {
+		.name		= "H4",
+		.core_count	= 1,
+		.state		= H4,
+	},
+#else
 	[H3] = {
 		.name		= "H3",
 		.core_count	= 1,
 		.state		= H3,
-	},
-#else
-	[H2] = {
-		.name		= "H2",
-		.core_count	= 1,
-		.state		= H2,
 	},
 #endif
 };
@@ -207,8 +214,8 @@ static void hotplug_enter_hstate(bool force, enum hstate state)
 		max_state = ctrl_hotplug.max_lock;
 
 #ifndef CONFIG_EXYNOS7580_QUAD
-		if (lcd_on && (state > H1))
-			state = H1;
+		if (lcd_on && (state > H3))
+			state = H3;
 #else
 		if (lcd_on)
 			state = H0;
@@ -245,16 +252,6 @@ static void hotplug_enter_hstate(bool force, enum hstate state)
 
 	ctrl_hotplug.old_state = state;
 	ctrl_hotplug.cur_hstate = state;
-}
-
-void exynos_dm_hotplug_disable(void)
-{
-	/* Reserved Function */
-}
-
-void exynos_dm_hotplug_enable(void)
-{
-	/* Reserved Function */
 }
 
 void exynos_dc_hotplug_control(int state)
@@ -655,6 +652,46 @@ static ssize_t show_time_in_state(struct device *dev,
 	return len;
 }
 
+static int exynos_pm_notify(struct notifier_block *nb, unsigned long event,
+	void *dummy)
+{
+	mutex_lock(&hotplug_lock);
+	if (event == PM_SUSPEND_PREPARE) {
+		ctrl_hotplug.suspended = true;
+
+		atomic_set(&freq_history[UP], 0);
+		atomic_set(&freq_history[DOWN], 0);
+
+		mutex_unlock(&hotplug_lock);
+
+		cancel_delayed_work_sync(&exynos_hotplug);
+	} else if (event == PM_POST_SUSPEND) {
+		ctrl_hotplug.suspended = false;
+
+		if (ctrl_hotplug.force_hstate == -1)
+			queue_delayed_work_on(0, khotplug_wq, &exynos_hotplug,
+					msecs_to_jiffies(ctrl_hotplug.sampling_rate));
+
+		mutex_unlock(&hotplug_lock);
+	}
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block exynos_cpu_pm_notifier = {
+	.notifier_call = exynos_pm_notify,
+};
+
+void exynos_dm_hotplug_disable(void)
+{
+
+}
+
+void exynos_dm_hotplug_enable(void)
+{
+
+}
+
 static DEVICE_ATTR(up_threshold, S_IRUGO | S_IWUSR, show_up_threshold, store_up_threshold);
 static DEVICE_ATTR(down_threshold, S_IRUGO | S_IWUSR, show_down_threshold, store_down_threshold);
 static DEVICE_ATTR(sampling_rate, S_IRUGO | S_IWUSR, show_sampling_rate, store_sampling_rate);
@@ -688,36 +725,6 @@ static struct attribute *clusterhotplug_default_attrs[] = {
 static struct attribute_group clusterhotplug_attr_group = {
 	.attrs = clusterhotplug_default_attrs,
 	.name = "clusterhotplug",
-};
-
-static int exynos_pm_notify(struct notifier_block *nb, unsigned long event,
-	void *dummy)
-{
-	mutex_lock(&hotplug_lock);
-	if (event == PM_SUSPEND_PREPARE) {
-		ctrl_hotplug.suspended = true;
-
-		atomic_set(&freq_history[UP], 0);
-		atomic_set(&freq_history[DOWN], 0);
-
-		mutex_unlock(&hotplug_lock);
-
-		cancel_delayed_work_sync(&exynos_hotplug);
-	} else if (event == PM_POST_SUSPEND) {
-		ctrl_hotplug.suspended = false;
-
-		if (ctrl_hotplug.force_hstate == -1)
-			queue_delayed_work_on(0, khotplug_wq, &exynos_hotplug,
-					msecs_to_jiffies(ctrl_hotplug.sampling_rate));
-
-		mutex_unlock(&hotplug_lock);
-	}
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block exynos_cpu_pm_notifier = {
-	.notifier_call = exynos_pm_notify,
 };
 
 static int __init dm_cluster_hotplug_init(void)

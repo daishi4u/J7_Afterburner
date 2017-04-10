@@ -27,6 +27,7 @@
 #include <linux/cpu.h>
 #include <linux/cpumask.h>
 #include <linux/hrtimer.h>
+#include <linux/stock_hotplug.h>
 
 #define DEBUG 0
 
@@ -65,10 +66,14 @@ static unsigned long delay_jif = 0;
 static int enabled __read_mostly = 0; //enabled by default.
 
 static void __cpuinit asmp_work_fn(struct work_struct *work) {
-	unsigned int cpu = 0, slow_cpu = 0;
-	unsigned int rate, cpu0_rate, slow_rate = UINT_MAX, fast_rate;
+	unsigned int cpu, slow_cpu;
+	unsigned int rate, cpu0_rate, slow_rate, fast_rate;
 	unsigned int max_rate, up_rate, down_rate;
 	int nr_cpu_online;
+
+   cpu = 0;
+   slow_cpu = 0;
+   slow_rate = UINT_MAX;
 
 	cycle++;
 
@@ -134,6 +139,7 @@ static void asmp_power_suspend(struct power_suspend *h) {
 	unsigned int cpu;
 
 	/* unplug online cpu cores */
+   cpu = 0;
 		
 	for_each_present_cpu(cpu)
 	{
@@ -149,6 +155,8 @@ static void asmp_power_suspend(struct power_suspend *h) {
 
 static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 	unsigned int cpu;
+
+   cpu = 0;
 
 	/* hotplug offline cpu cores */
 
@@ -172,11 +180,14 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 	int ret, last_val = enabled;
 	unsigned int cpu;
 
+   cpu = 0;
+
 	ret = param_set_bool(val, kp);
 	
 	if(enabled != last_val)
 	{
 		if (enabled) {
+			exynos_dm_hotplug_disable();
 			queue_delayed_work(asmp_workq, &asmp_work,
 					msecs_to_jiffies(asmp_param.delay));
 			register_power_suspend(&asmp_power_suspend_handler);
@@ -191,6 +202,7 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 					cpu_up(cpu);
 			}
 			pr_info(ASMP_TAG"disabled\n");
+			exynos_dm_hotplug_enable();
 		}
 	}
 	return ret;
@@ -268,8 +280,10 @@ static struct attribute_group asmp_attr_group = {
 #if DEBUG
 static ssize_t show_times_hotplugged(struct kobject *a,
 					struct attribute *b, char *buf) {
-	ssize_t len = 0;
+	ssize_t len;
 	int cpu;
+   cpu = 0;
+   len = 0;
 
 	for_each_possible_cpu(cpu) {
 		len += sprintf(buf + len, "%i %llu\n", cpu,
@@ -295,6 +309,8 @@ static int __init asmp_init(void) {
 	unsigned int cpu;
 	int rc;
 
+   cpu = 0;
+
 	asmp_param.max_cpus = nr_cpu_ids;
 	for_each_possible_cpu(cpu)
 		per_cpu(asmp_cpudata, cpu).times_hotplugged = 0;
@@ -305,6 +321,7 @@ static int __init asmp_init(void) {
 	INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
 	if (enabled)
 	{
+		exynos_dm_hotplug_disable();
 		queue_delayed_work(asmp_workq, &asmp_work,
 				   msecs_to_jiffies(ASMP_STARTDELAY));
 		register_power_suspend(&asmp_power_suspend_handler);

@@ -22,6 +22,7 @@
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <linux/stock_hotplug.h>
 
 #define CONFIG_ALUCARD_HOTPLUG_USE_CPU_UTIL
 
@@ -637,9 +638,15 @@ static ssize_t store_hotplug_enable(struct kobject *a, struct attribute *b,
 		return count;
 
 	if (input > 0)
+	{
+		exynos_dm_hotplug_disable();
 		cpus_hotplugging(1);
+	}
 	else
+	{
 		cpus_hotplugging(0);
+		exynos_dm_hotplug_enable();
+	}
 
 	return count;
 }
@@ -846,18 +853,30 @@ static int __init alucard_hotplug_init(void)
 	};
 	unsigned int hotplug_load[NR_CPUS][2] = {
 		{0, 60},
+		{0, 60},
 		{30, 65},
 		{30, 65},
+		{30, 65},
+		{30, 65},
+		{30, 0},
 		{30, 0}
 	};
 	unsigned int hotplug_rq[NR_CPUS][2] = {
 		{0, 100},
+		{0, 100},
+		{100, 200},
 		{100, 200},
 		{200, 300},
+		{200, 300},
+		{300, 0},
 		{300, 0}
 	};
 	unsigned int hotplug_rate[NR_CPUS][2] = {
 		{1, 1},
+		{1, 1},
+		{4, 1},
+		{4, 1},
+		{4, 1},
 		{4, 1},
 		{4, 1},
 		{4, 1}
@@ -884,6 +903,7 @@ static int __init alucard_hotplug_init(void)
 	}
 
 	if (hotplug_tuners_ins.hotplug_enable > 0) {
+		exynos_dm_hotplug_disable();
 		hotplug_start();
 	}
 
@@ -894,6 +914,7 @@ static void __exit alucard_hotplug_exit(void)
 {
 	if (hotplug_tuners_ins.hotplug_enable > 0) {
 		hotplug_stop();
+		exynos_dm_hotplug_enable();
 	}
 
 	sysfs_remove_group(kernel_kobj, &alucard_hotplug_attr_group);
