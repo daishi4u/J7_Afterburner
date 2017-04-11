@@ -1197,32 +1197,6 @@ static void cpufreq_out_of_sync(unsigned int cpu, unsigned int old_freq,
 	cpufreq_notify_transition(policy, &freqs, CPUFREQ_POSTCHANGE);
 }
 
-/**
-* cpufreq_quick_get_util - get the CPU utilization from policy->util
-* @cpu: CPU number
-*
-* This is the last known util, without actually getting it from the driver.
-* Return value will be same as what is shown in util in sysfs.
-*/
-struct cpu_load
-{
-	unsigned int frequency;
-	unsigned int load;
-	u64 last_update;
-};
-static DEFINE_PER_CPU(struct cpu_load, cpuload);
-
-unsigned int cpufreq_quick_get_util(unsigned int cpu)
-{
-	unsigned int cur_load;
-	
-	struct cpu_load *pcpuload = &per_cpu(cpuload, cpu);
-	cur_load = pcpuload->load;
-	
-	return cur_load;
-}
-EXPORT_SYMBOL(cpufreq_quick_get_util);
-
 
 /**
  * cpufreq_quick_get - get the CPU frequency (in kHz) from policy->cur
