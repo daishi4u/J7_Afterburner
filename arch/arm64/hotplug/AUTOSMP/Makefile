@@ -1,1 +1,0 @@
-obj-$(CONFIG_ASMP)		+= autosmp.o

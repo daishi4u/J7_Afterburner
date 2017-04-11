@@ -1,6 +1,0 @@
-config INTELLI_PLUG
-	   bool "intelliplug hotplug"
-	   default y
-	   help
-		 This enables kernel based multi core control.
-
