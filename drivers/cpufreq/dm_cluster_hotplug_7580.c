@@ -7,7 +7,6 @@
 #include <linux/sched.h>
 #include <linux/suspend.h>
 #include <linux/pm_qos.h>
-#include <linux/stock_hotplug.h>
 
 static struct delayed_work exynos_hotplug;
 static struct delayed_work start_hotplug;

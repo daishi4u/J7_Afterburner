@@ -634,23 +634,3 @@ source "arch/arm64/crypto/Kconfig"
 endif
 
 source "lib/Kconfig"
-
-source "arch/arm64/hotplug/ZENDECISION/Kconfig"
-
-source "arch/arm64/hotplug/AUTOSMP/Kconfig"
-
-# source "arch/arm64/hotplug/INTELLIPLUG/Kconfig"
-
-source "arch/arm64/hotplug/THUNDERPLUG/Kconfig"
-
-source "arch/arm64/hotplug/ALUCARD/Kconfig"
-
-source "arch/arm64/hotplug/MAKO/Kconfig"
-
-source "arch/arm64/hotplug/HIMA/Kconfig"
-
-source "arch/arm64/hotplug/BRICKED/Kconfig"
-
-# source "arch/arm64/hotplug/MSMSLEEPER/Kconfig"
-
-source "arch/arm64/hotplug/MSMHOTPLUG/Kconfig"
