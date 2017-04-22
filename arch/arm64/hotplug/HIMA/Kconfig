@@ -1,0 +1,5 @@
+config HIMA_HOTPLUG
+        bool "Enable hima-hotplug cpu hotplug driver"
+        default n
+        help
+          Generic cpu hotplugging driver for ARM SOCs
